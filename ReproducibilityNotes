@@ -1,0 +1,24 @@
+# Dependencies
+
+(Currently for use only between the developers)
+
+Large files, not included in the Github Repo:
+
+## Original Data 
+
+is accessible only on IU UITS systems:
+
+The address is:
+/N/project/infant_image_statistics/03_JPG_AllMasters
+
+Authorization required to access the above Slate-project space.
+
+
+## Trained Models
+
+PyTorch models, Pretrained by Saber:
+/N/slate/sheybani/tmp_dir/trainedmodels
+
+PyTorch models, Pretrained by Himanshu:
+
+
