@@ -1,0 +1,40 @@
+#!/bin/bash
+#####  Constructed by HPC everywhere #####
+#SBATCH --mail-user=sheybani@iu.edu
+#SBATCH --nodes=1
+#SBATCH --ntasks=8
+#SBATCH --cpus-per-task=1
+#SBATCH --time=0-08:00:00
+#SBATCH --mail-type=FAIL,BEGIN,END
+#SBATCH --job-name=jobsvid5
+#SBATCH --output=jobsvid5_Out
+#SBATCH --error=jobsvid5_Err
+
+######  Module commands #####
+
+
+######  Job commands go below this line #####
+ds_rate=3
+
+out_dir="/N/project/infant_image_statistics/preproc_saber/JPG_10fps/"
+#out_dir="/N/project/infant_image_statistics/preproc_saber/JPG_10fps_adult/"
+
+cclip_root="/N/project/infant_image_statistics/02_cclip_AllMasters/"
+#Adult
+#cclip_root="/N/project/infant_image_statistics/1C_LooxcieAdult/02_cclip_AllMasters/"
+exclude_dir="/N/project/infant_image_statistics/donotcode_ranges/"
+
+#declare -a StringArray=('007OW' '008MS' '009SS_withrotation' '011EA_withrotation' '012TT_withrotation' '013LS' '014SN' '016TF' '018MT' '026AR' '027SS' '028MR' '029TT' '030FD' '032SR' '033SE' '034JC_withlighting' '034MT' '044ET' '045NA' '046TE' '048KG' '049JC'  '050AB' '050AK_rotation' '051DW' '053KD')
+
+#declare -a StringArray=('TR' 'BR' 'CW') 
+
+declare -a StringArray=('042MB_withrotation' '043MP' '047MS' '053MT')
+#'003MT' '004AB' '005JL_withrotation' '006AP_withrotation' '010BF_withrotation' '015JM' '017EW_withrotation' '019JC' '020EC' '020MS_withlighting' '022JL' '023NF' '024AM' '024RZ' '025TT' '028CK' '031HW' '034NW' '036MR_withrotation' '037SM_withrotation' '038RB' '039ED' '040ER_withrotation' '041EC'  '042MB_withrotation' '043MP' '047MS' '053MT')
+
+
+# Iterate the string array using for loop
+for subj_name in ${StringArray[@]}; do
+   echo $subj_name
+   srun --exclusive -n 1 -c 1 python ~/github/PretrainingInfantEgocentric/preproc/subsample_videos.py -subj_names=$subj_name -ds_rate=$ds_rate -out_dir=$out_dir --cclip_root $cclip_root --exclude_dir $exclude_dir &
+done
+wait

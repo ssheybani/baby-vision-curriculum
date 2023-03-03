@@ -1,6 +1,12 @@
-# Dependencies
+What goes here:
+Things we need to know for accessing data and pretrained models.
 
 (Currently for use only between the developers)
+
+# Dependencies
+- HuggingFace
+
+
 
 Large files, not included in the Github Repo:
 
@@ -20,5 +26,3 @@ PyTorch models, Pretrained by Saber:
 /N/slate/sheybani/tmp_dir/trainedmodels
 
 PyTorch models, Pretrained by Himanshu:
-
-

@@ -1,0 +1,38 @@
+#!/bin/bash
+#####  Constructed by HPC everywhere #####
+#SBATCH --mail-user=sheybani@iu.edu
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=40
+#SBATCH --time=0-2:00:00
+#SBATCH --mem-per-cpu 8G
+#SBATCH --partition=gpu
+#SBATCH --gpus v100:1
+#SBATCH --mail-type=FAIL,BEGIN,END
+#SBATCH --job-name=myjob3
+#SBATCH --output=job3_Out
+#SBATCH --error=job3_Err
+
+######  Module commands #####
+
+
+
+######  Job commands go below this line #####
+n_epochs=2
+model_dir="/N/scratch/sheybani/trainedmodels/multistage/simclr/aug21/"
+ds_task="toybox"
+
+# candidate checkpoints
+model_fname1="model_222_stage_0_seed_0_560.pt"
+model_fname2="model_protocol_231_aug14aug_231_0_stage_1.pt"
+model_fname3="model_protocol_321_aug14aug_321_0_stage_1.pt"
+model_fname123="model_protocol_123_aug10noaug_123_0_stage_3.pt"
+model_fname321="model_protocol_321_aug10noaug_321_0_stage_3.pt"
+model_fname231="model_protocol_231_aug10noaug_231_0_stage_3.pt"
+#model_fname213="model_protocol_213_aug10noaug_213_0_stage_3.pt"
+
+model_fname=$model_fname1
+
+echo $model_fname
+model_fpath=$model_dir$model_fname
+python ~/github/PretrainingInfantEgocentric/downstream/downstream_wrapper_ddp.py --task=$ds_task --model_path=$model_fpath --outdir=$model_dir --epochs=$n_epochs

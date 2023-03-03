@@ -1,0 +1,40 @@
+#!/bin/bash
+#####  Constructed by HPC everywhere #####
+#SBATCH --mail-user=sheybani@iu.edu
+#SBATCH --nodes=1
+#SBATCH --partition=largememory 
+#SBATCH --cpus-per-task=24
+#SBATCH --mem=503G
+#SBATCH --time=2-00:00:00
+#SBATCH --mail-type=FAIL,BEGIN,END
+#SBATCH --job-name=job_9_mp
+#SBATCH --output=job_9_mp_Out
+#SBATCH --error=job_9_mp_Err
+
+######  Module commands #####
+
+
+
+######  Job commands go below this line #####
+
+embedder_name="CLIP-ViT-H-14-laion2B"
+
+#save_dir="/N/scratch/sheybani/homeview_embeddings/"
+save_dir="/N/project/infant_image_statistics/preproc_saber/embeddings/"
+#jpg_root="/N/project/infant_image_statistics/preproc_saber/JPG_10fps_adult/"
+jpg_root="/N/project/infant_image_statistics/preproc_saber/JPG_10fps/"
+ds_rate=1
+
+batch_size=64
+num_workers=4
+world_size=4
+
+# for joblib. no subworkers.
+#1024,0,23
+
+#declare -a StringArray=('007OW' '008MS' '009SS_withrotation' '011EA_withrotation' '012TT_withrotation' '013LS' '014SN' '016TF' '018MT' '026AR' '027SS' '028MR' '029TT' '030FD' '032SR' '033SE' '034JC_withlighting' '034MT' '044ET' '045NA' '046TE' '048KG' '049JC'  '050AB' '050AK_rotation' '051DW' '053KD')
+
+subj_dirs="009SS_withrotation"
+
+python ~/github/PretrainingInfantEgocentric/preproc/encode_clip_mp_cpu.py -embedder_name $embedder_name -save_dir $save_dir --jpg_root $jpg_root --subj_dirs $subj_dirs --ds_rate $ds_rate --batch_size $batch_size --num_workers $num_workers --world_size $world_size
+

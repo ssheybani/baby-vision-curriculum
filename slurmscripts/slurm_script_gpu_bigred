@@ -1,0 +1,84 @@
+#!/bin/bash
+#####  Constructed by HPC everywhere #####
+#SBATCH --mail-user=sheybani@iu.edu
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=30
+#SBATCH --time=0-3:00:00
+#SBATCH --mem-per-cpu 8G
+#SBATCH --partition=gpu
+#SBATCH --gpus 4
+#SBATCH --mail-type=FAIL,BEGIN,END
+#SBATCH --job-name=jobtrain2
+#SBATCH --output=jobtrain2_Out
+#SBATCH --error=jobtrain2_Err
+
+######  Module commands #####
+
+
+
+######  Job commands go below this line #####
+T_NEIGH=10
+AUG="c"
+
+SCRIPT_NAME="exp_v2.1_seq.py"
+EP=3
+SAVEDIR="/N/scratch/sheybani/trainedmodels/multistage/simclr/aug26/"
+
+PROTOCOL="210"
+DATASEED=0
+OTHERSEED=$(($RANDOM%1000))
+
+python ~/github/PretrainingInfantEgocentric/train/exp_v2.1_seq.py -prot $PROTOCOL -data_seed $DATASEED -other_seed=$OTHERSEED -savedir $SAVEDIR -aug $AUG --n_epoch $EP --t_neigh $T_NEIGH --script $SCRIPT_NAME
+
+MODELFNAME="model_"$PROTOCOL"_stage_2_seed_"$DATASEED"_"$OTHERSEED".pt"
+MODELPATH=$SAVEDIR$MODELFNAME
+
+
+
+
+
+
+PROTOCOL="012"
+SEED=1
+
+python ~/github/PretrainingInfantEgocentric/train/exp_v2.1_seq.py -prot $PROTOCOL -seed $SEED -savedir $SAVEDIR -aug $AUG --n_epoch $EP --t_neigh $T_NEIGH --script $SCRIPT_NAME
+
+
+PROTOCOL="012"
+SEED=2
+
+python ~/github/PretrainingInfantEgocentric/train/exp_v2.1_seq.py -prot $PROTOCOL -seed $SEED -savedir $SAVEDIR -aug $AUG --n_epoch $EP --t_neigh $T_NEIGH --script $SCRIPT_NAME
+
+
+PROTOCOL="222"
+SEED=0
+
+python ~/github/PretrainingInfantEgocentric/train/exp_v2.1_seq.py -prot $PROTOCOL -seed $SEED -savedir $SAVEDIR -aug $AUG --n_epoch $EP --t_neigh $T_NEIGH --script $SCRIPT_NAME
+
+PROTOCOL="222"
+SEED=1
+
+python ~/github/PretrainingInfantEgocentric/train/exp_v2.1_seq.py -prot $PROTOCOL -seed $SEED -savedir $SAVEDIR -aug $AUG --n_epoch $EP --t_neigh $T_NEIGH --script $SCRIPT_NAME
+
+PROTOCOL="222"
+SEED=2
+
+python ~/github/PretrainingInfantEgocentric/train/exp_v2.1_seq.py -prot $PROTOCOL -seed $SEED -savedir $SAVEDIR -aug $AUG --n_epoch $EP --t_neigh $T_NEIGH --script $SCRIPT_NAME
+
+PROTOCOL="210"
+SEED=0
+
+python ~/github/PretrainingInfantEgocentric/train/exp_v2.1_seq.py -prot $PROTOCOL -seed $SEED -savedir $SAVEDIR -aug $AUG --n_epoch $EP --t_neigh $T_NEIGH --script $SCRIPT_NAME
+
+PROTOCOL="210"
+SEED=1
+
+python ~/github/PretrainingInfantEgocentric/train/exp_v2.1_seq.py -prot $PROTOCOL -seed $SEED -savedir $SAVEDIR -aug $AUG --n_epoch $EP --t_neigh $T_NEIGH --script $SCRIPT_NAME
+
+PROTOCOL="210"
+SEED=2
+
+python ~/github/PretrainingInfantEgocentric/train/exp_v2.1_seq.py -prot $PROTOCOL -seed $SEED -savedir $SAVEDIR -aug $AUG --n_epoch $EP --t_neigh $T_NEIGH --script $SCRIPT_NAME
+
+
