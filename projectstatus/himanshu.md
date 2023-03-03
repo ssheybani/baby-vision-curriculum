@@ -22,10 +22,12 @@
 - Goals:
 	- Set up your development environment. => DONE
 	- Create a pipeline that loads the infant data and computes the VideoMAE loss.
-	- Validation: Benchmark the untrained model on CIFAR10. Report linear probing accuracy after 30 epochs.
+	- Validation: Benchmark the untrained model on CIFAR10. Report linear probing accuracy after 30 epochs. Contact Saber with the results.
 	- Train the model for 1 epoch on BigRed200 multi-GPU setting.
 	- Validation: Benchmark the pretrained model on CIFAR10. Report linear probing accuracy after 30 epochs.
-	- 	Report runtime per epoch for training and validation. Report GPU memory usage.
+	- Report runtime per epoch for training and validation. Report GPU memory usage.
+	-- Optimize the batch_size and other hyperparameters for performance and accuracy.
+	
 	- Deliver a model checkpoint that can be passed into BrainScore.
 	
 - Blockers/Progress
@@ -38,6 +40,6 @@
 
 Future Goals:
 - By Mar 15: Find the right set of hyperparamters for pretraining to: maximize performance, minimize runtime.
-- Run the curriculum vs anti-curriculum experiemnts.
+- Mar15 - Apr15: Iterate with the paper results: running the curriculum vs anti-curriculum experiments.
 - By April 15: Submit to BrainScore (we should be ready to write the paper after this).
 - If there's more time, try more algorithms.
