@@ -17,11 +17,12 @@
 
 ## Sprint Goals/Outcomes
 
-#### Sprint 1:  Mar 1 - Mar 10
+#### Sprint 1:  Mar 1 - Mar 15
 ---
 - Goals:
-	- Set up your development environment. 
+	- Set up your development environment. => DONE
 	- Create a pipeline that loads the infant data and computes the VideoMAE loss.
+	- Validation: Benchmark the untrained model on CIFAR10. Report linear probing accuracy after 30 epochs.
 	- Train the model for 1 epoch on BigRed200 multi-GPU setting.
 	- Validation: Benchmark the pretrained model on CIFAR10. Report linear probing accuracy after 30 epochs.
 	- 	Report runtime per epoch for training and validation. Report GPU memory usage.
