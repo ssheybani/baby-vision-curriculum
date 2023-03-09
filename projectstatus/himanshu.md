@@ -21,7 +21,7 @@
 ---
 - Goals:
 	- Set up your development environment. => DONE
-	- Create a pipeline that loads the infant data and computes the VideoMAE loss.
+	- Create a pipeline that loads the infant data and computes the VideoMAE loss. => DONE
 	- Validation: Benchmark the untrained model on CIFAR10. Report linear probing accuracy after 30 epochs. Contact Saber with the results.
 	- Train the model for 1 epoch on BigRed200 multi-GPU setting.
 	- Validation: Benchmark the pretrained model on CIFAR10. Report linear probing accuracy after 30 epochs.
