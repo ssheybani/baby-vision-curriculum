@@ -34,48 +34,48 @@ from transformers import VideoMAEConfig, VideoMAEModel
 # ------------
 # Dataset and Dataloader
 
-def _get_transform(task):
-    mean = [0.5, 0.5, 0.5]#np.mean(mean_all, axis=0) #mean_all[chosen_subj] 
-    std = [0.25, 0.25, 0.25] #std_all[chosen_subj] 
+# def _get_transform(task):
+#     mean = [0.5, 0.5, 0.5]#np.mean(mean_all, axis=0) #mean_all[chosen_subj] 
+#     std = [0.25, 0.25, 0.25] #std_all[chosen_subj] 
 
-    if task=='toybox':
-        return tr.Compose([
-            tr.Resize(224),
-            tr.CenterCrop(224),
-            tr.ConvertImageDtype(torch.float32),
-            tr.Normalize(mean,std)]
-            )
+#     if task=='toybox':
+#         return tr.Compose([
+#             tr.Resize(224),
+#             tr.CenterCrop(224),
+#             tr.ConvertImageDtype(torch.float32),
+#             tr.Normalize(mean,std)]
+#             )
     
-    elif task=='cifar10':
-        return tr.Compose([
-            tr.Resize(224),
-            tr.CenterCrop(224),
-            tr.ToTensor(),
-            tr.ConvertImageDtype(torch.float32),
-            tr.Normalize(mean,std)]
-            )
-    elif task=='stl10':
-        return tr.Compose([
-            tr.Resize(224),
-            tr.CenterCrop(224),
-            tr.ToTensor(),
-            tr.ConvertImageDtype(torch.float32),
-            tr.Normalize(mean,std)]
-            )
-    else:
-        raise ValueError
+#     elif task=='cifar10':
+#         return tr.Compose([
+#             tr.Resize(224),
+#             tr.CenterCrop(224),
+#             tr.ToTensor(),
+#             tr.ConvertImageDtype(torch.float32),
+#             tr.Normalize(mean,std)]
+#             )
+#     elif task=='stl10':
+#         return tr.Compose([
+#             tr.Resize(224),
+#             tr.CenterCrop(224),
+#             tr.ToTensor(),
+#             tr.ConvertImageDtype(torch.float32),
+#             tr.Normalize(mean,std)]
+#             )
+#     else:
+#         raise ValueError
         
         
 def make_dataset(task):
-    transform = _get_transform(task)
+    # transform = _get_transform(task)
     
-    if task=='toybox':
-        toyboximg_root = '/N/scratch/sheybani/toybox_img/'
-        image_datasets = make_toybox_dataset(toyboximg_root, transform, split='exemplar')
-        num_classes = 12 #397 #
+    # if task=='toybox':
+    #     toyboximg_root = '/N/scratch/sheybani/toybox_img/'
+    #     image_datasets = make_toybox_dataset(toyboximg_root, transform, split='exemplar')
+    #     num_classes = 12 #397 #
 
-    elif task=='cifar10':
-        cifar10img_root = '/N/slate/sheybani/cifar10/'
+    if task=='cifar10':
+        cifar10img_root = '/N/slate/hhansar/cifar10/'
         image_datasets = {'train': torchvision.datasets.CIFAR10(root=cifar10img_root,
                                             train=True, download=True),
                           'val': torchvision.datasets.CIFAR10(root=cifar10img_root,
@@ -83,14 +83,14 @@ def make_dataset(task):
                }
         num_classes = 10 
     
-    elif task=='stl10':
-        stl10_root = '/N/scratch/sheybani/stl10/'
-        image_datasets = {'train': torchvision.datasets.STL10(stl10_root, split='train', folds=None, 
-                                  transform=_get_transform(task), download=True),
-                          'val': torchvision.datasets.STL10(stl10_root, split='test', folds=None, 
-                                  transform=_get_transform(task), download=True),
-               }
-        num_classes = 10 
+    # elif task=='stl10':
+    #     stl10_root = '/N/scratch/sheybani/stl10/'
+    #     image_datasets = {'train': torchvision.datasets.STL10(stl10_root, split='train', folds=None, 
+    #                               transform=_get_transform(task), download=True),
+    #                       'val': torchvision.datasets.STL10(stl10_root, split='test', folds=None, 
+    #                               transform=_get_transform(task), download=True),
+    #            }
+    #     num_classes = 10 
     
     else:
         raise ValueError
