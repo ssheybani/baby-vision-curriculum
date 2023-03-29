@@ -3,8 +3,7 @@ import sys, os
 
 if 'BigRed200' in os.getcwd().split('/'):
 #     print('Running on BigRed200')
-    sys.path.insert(0,'/geode2/home/u080/sheybani/BigRed200/spenv/lib/python3.10/site-packages')
-
+    sys.path.insert(0,'/N/slate/hhansar/hgenv/lib/python3.10/site-packages')
 # SCRIPT_DIR = os.getcwd() #os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))
 # util_path = os.path.normpath(os.path.join(SCRIPT_DIR, '..', 'util'))
 # sys.path.insert(0, util_path)    

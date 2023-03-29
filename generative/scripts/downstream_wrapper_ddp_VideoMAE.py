@@ -6,7 +6,7 @@ import sys, os, inspect
 
 if 'BigRed200' in os.getcwd().split('/'):
 #     print('Running on BigRed200')
-    sys.path.insert(0,'/geode2/home/u080/sheybani/BigRed200/spenv/lib/python3.10/site-packages')
+    sys.path.insert(0,'/N/slate/hhansar/hgenv/lib/python3.10/site-packages')
     
 import argparse
 import numpy as np
@@ -272,6 +272,7 @@ def DDP_process(rank, world_size, seed, args):#protocol, seed):
                          scheduler=scheduler, verbose=True)
     
     #Where to put nvidia-smi
+    print("GPU Memory occupied :-")
     torch.cuda.memory_allocated()
     cleanup()
     
