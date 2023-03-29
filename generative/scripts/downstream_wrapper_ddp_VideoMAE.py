@@ -28,7 +28,7 @@ sys.path.insert(0, util_path)
 from ddputils import is_main_process, save_on_master, setup_for_distributed
 
 from train_downstream import train_classifier_ddp
-from make_toybox_dataset import make_toybox_dataset
+# from make_toybox_dataset import make_toybox_dataset
 from transformers import VideoMAEConfig, VideoMAEModel
 
 # ------------
