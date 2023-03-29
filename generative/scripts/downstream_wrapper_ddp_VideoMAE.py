@@ -76,11 +76,8 @@ def make_dataset(task):
 
     if task=='cifar10':
         cifar10img_root = '/N/slate/hhansar/cifar10/'
-        image_datasets = {'train': torchvision.datasets.CIFAR10(root=cifar10img_root,
-                                            train=True, download=True),
-                          'val': torchvision.datasets.CIFAR10(root=cifar10img_root,
-                                            train=False, download=True)
-               }
+        image_datasets = {'train': torchvision.datasets.CIFAR10(root=cifar10img_root,train=True, download=True),
+                          'val': torchvision.datasets.CIFAR10(root=cifar10img_root,train=False, download=True)}
         num_classes = 10 
     
     # elif task=='stl10':
