@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# In[1]:
+
+
 import os
 import sys
-
 if 'Carbonate' in os.getcwd().split('/'):
     sys.path.insert(0,'/N/slate/hhansar/hgenv/lib/python3.10/site-packages')
 
 
-# In[1]:
+# In[2]:
 
 
 import torch
@@ -17,7 +19,9 @@ import torchvision.transforms as transforms
 from transformers import AutoImageProcessor
 
 
-# In[2]:
+# In[3]:
+
+
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # Assuming that we are on a CUDA machine, this should print a CUDA device:
@@ -25,55 +29,57 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print(device)
 
 
+# In[4]:
+
 
 transform = transforms.Compose(
 #     [transforms.Resize((16, 16)),
      [transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-batch_size = 1
+batch_size = 8
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                         download=True, transform=transform)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
-                                          shuffle=True, num_workers=2)
+                                          shuffle=True, num_workers=20)
 
 testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                        download=True, transform=transform)
 testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-                                         shuffle=False, num_workers=2)
+                                         shuffle=False, num_workers=20)
 
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 
-# In[3]:
+# In[5]:
 
 
-import matplotlib.pyplot as plt
-import numpy as np
+# import matplotlib.pyplot as plt
+# import numpy as np
 
-# functions to show an image
-
-
-def imshow(img):
-    img = img / 2 + 0.5     # unnormalize
-    npimg = img.numpy()
-    plt.imshow(np.transpose(npimg, (1, 2, 0)))
-    plt.show()
+# # functions to show an image
 
 
-# get some random training images
-dataiter = iter(trainloader)
-images, labels = next(dataiter)
-
-# show images
-imshow(torchvision.utils.make_grid(images))
-# print labels
-print(' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size)))
+# def imshow(img):
+#     img = img / 2 + 0.5     # unnormalize
+#     npimg = img.numpy()
+#     plt.imshow(np.transpose(npimg, (1, 2, 0)))
+#     plt.show()
 
 
-# In[24]:
+# # get some random training images
+# dataiter = iter(trainloader)
+# images, labels = next(dataiter)
+
+# # show images
+# imshow(torchvision.utils.make_grid(images))
+# # print labels
+# print(' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size)))
+
+
+# In[6]:
 
 
 import torch.nn as nn
@@ -85,8 +91,9 @@ from transformers import AutoImageProcessor, VideoMAEForPreTraining, VideoMAECon
 config = VideoMAEConfig()
 model = VideoMAEModel(config)
 model.eval()
+print(model)
 # backbone = torch.load('encoder.pt')
-# backbone.eval()
+# backbone.eval()# class Net(nn.Module):
 
 num_classes = 10
 class CIFAR10Benchmark(nn.Module):
@@ -103,40 +110,41 @@ class CIFAR10Benchmark(nn.Module):
         logits = self.classifier(pooled_output)
         return logits
 CIFAR10Model = CIFAR10Benchmark(model)
-CIFAR10Model.to(device)
+CIFAR10Model = CIFAR10Model.to(device)
 
-# In[25]:
+
+# In[7]:
 
 
 import torch.optim as optim
-
+from tqdm import tqdm
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(CIFAR10Model.parameters(), lr=0.001, momentum=0.9)
 image_processor = AutoImageProcessor.from_pretrained("MCG-NJU/videomae-base")
 
 
-# In[ ]:
+# In[8]:
 
 
 for epoch in range(30):  # loop over the dataset multiple times
 
     running_loss = 0.0
-    for i, data in enumerate(trainloader, 0):
+    for i, data in enumerate(tqdm(trainloader), 0):
         # get the inputs; data is a list of [inputs, labels]
-        # inputs, labels = data
-        inputs, labels = data[0].to(device), data[1].to(device)
-#         print(inputs.shape)
-        num_frames = 16
-        inputs = inputs.repeat(num_frames, 1, 1,1)
-        print(inputs.shape)
+        inputs, labels = data
         inputs = list(inputs)
         inputs = image_processor(inputs, return_tensors="pt").pixel_values
 #         print(inputs.shape)
-#         for i in inputs:
-#             print(i.shape)
+        inputs = torch.swapaxes(inputs, 0,1)
+        num_frames = 16
+        inputs = inputs.repeat(1,num_frames, 1, 1,1)
+#         print(inputs.shape)
+        inputs, labels = inputs.to(device), labels.to(device)
+#         print(inputs.shape)
+
 #         # zero the parameter gradients
         optimizer.zero_grad()
-
+#         print(inputs.device)
         # forward + backward + optimize
         outputs = CIFAR10Model(inputs)
         loss = criterion(outputs, labels)
@@ -145,9 +153,9 @@ for epoch in range(30):  # loop over the dataset multiple times
 
         # print statistics
         running_loss += loss.item()
-#         if i % 2000 == 1999:    # print every 2000 mini-batches
-#             print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
-#             running_loss = 0.0
+        if i % 10 == 0:    # print every 2000 mini-batches
+            print(f'[{i}] loss: {running_loss / 10:.3f}')
+            running_loss = 0.0
     print(f'Epoch loss {epoch}',running_loss/ len(trainloader))
 
 print('Finished Training')
@@ -156,91 +164,55 @@ print('Finished Training')
 # In[ ]:
 
 
-"""Let's quickly save our trained model:
+nvidia-smi
 
 
-"""
+# In[ ]:
+
 
 PATH = './cifar_net.pth'
 torch.save(net.state_dict(), PATH)
 
-"""See [here](https://pytorch.org/docs/stable/notes/serialization.html)
-for more details on saving PyTorch models.
-
-### 5. Test the network on the test data
-
-We have trained the network for 2 passes over the training dataset.
-But we need to check if the network has learnt anything at all.
-
-We will check this by predicting the class label that the neural network
-outputs, and checking it against the ground-truth. If the prediction is
-correct, we add the sample to the list of correct predictions.
-
-Okay, first step. Let us display an image from the test set to get familiar.
-
-
-"""
-
 dataiter = iter(testloader)
 images, labels = next(dataiter)
-
+images = list(images)
+images = image_processor(images, return_tensors="pt").pixel_values
+#         print(inputs.shape)
+images = torch.swapaxes(images, 0,1)
+num_frames = 16
+images = images.repeat(1,num_frames, 1, 1,1)
+#         print(inputs.shape)
+images, labels = images.to(device), labels.to(device)
 # print images
 imshow(torchvision.utils.make_grid(images))
 print('GroundTruth: ', ' '.join(f'{classes[labels[j]]:5s}' for j in range(4)))
 
-"""Next, let's load back in our saved model (note: saving and re-loading the model
-wasn't necessary here, we only did it to illustrate how to do so):
-
-
-"""
-
 net = CIFAR10Benchmark(model)
-net.to(device)
 net.load_state_dict(torch.load(PATH))
+net.to(device)
 
-"""Okay, now let us see what the neural network thinks these examples above are:
-
-
-"""
-num_frames = 16
-images = images.repeat(num_frames, 1, 1,1)
-print(images.shape)
-images = list(images)
-images = image_processor(images, return_tensors="pt").pixel_values
 outputs = net(images)
 
-"""The outputs are energies for the 10 classes.
-The higher the energy for a class, the more the network
-thinks that the image is of the particular class.
-So, let's get the index of the highest energy:
 
-
-"""
 
 _, predicted = torch.max(outputs, 1)
 
 print('Predicted: ', ' '.join(f'{classes[predicted[j]]:5s}'
                               for j in range(4)))
 
-"""The results seem pretty good.
-
-Let us look at how the network performs on the whole dataset.
-
-
-"""
 
 correct = 0
 total = 0
 # since we're not training, we don't need to calculate the gradients for our outputs
 with torch.no_grad():
     for data in testloader:
-        # images, labels = data
-        images, labels = data[0].to(device), data[1].to(device)
-        num_frames = 16
-        images = images.repeat(num_frames, 1, 1,1)
-        print(images.shape)
+        images, labels = data
         images = list(images)
         images = image_processor(images, return_tensors="pt").pixel_values
+        images = torch.swapaxes(images, 0,1)
+        num_frames = 16
+        images = images.repeat(1,num_frames, 1, 1,1)
+        images, labels = images.to(device), labels.to(device)
         # calculate outputs by running images through the network
         outputs = net(images)
         # the class with the highest energy is what we choose as prediction
@@ -249,4 +221,3 @@ with torch.no_grad():
         correct += (predicted == labels).sum().item()
 
 print(f'Accuracy of the network on the 10000 test images: {100 * correct // total} %')
-
