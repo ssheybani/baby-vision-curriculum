@@ -65,7 +65,6 @@ def _get_transform(task):
     else:
         raise ValueError
         
-        `
 def make_dataset(task):
     transform = _get_transform(task)
     
