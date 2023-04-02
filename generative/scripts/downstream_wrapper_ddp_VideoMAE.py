@@ -48,12 +48,13 @@ def _get_transform(task):
     
     elif task=='cifar10':
         return tr.Compose([
-            tr.Resize(224),
-            tr.CenterCrop(224),
+            # tr.Resize(224),
+            # tr.CenterCrop(224),
             tr.ToTensor(),
-            tr.ConvertImageDtype(torch.float32),
-            tr.Normalize(mean,std)]
+            # tr.ConvertImageDtype(torch.float32),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
             )
+
     elif task=='stl10':
         return tr.Compose([
             tr.Resize(224),
@@ -65,6 +66,7 @@ def _get_transform(task):
     else:
         raise ValueError
         
+
 def make_dataset(task):
     transform = _get_transform(task)
     
@@ -243,7 +245,7 @@ def DDP_process(rank, world_size, seed, args):#protocol, seed):
 
     # Make the dataloaders and samplers
     sampler_shuffle = True #for the distributed dampler
-    batch_size = 8
+    batch_size = 128
     pin_memory = True
     num_epochs = num_epochs
     num_workers = 7 #number_of_cpu-1#32
