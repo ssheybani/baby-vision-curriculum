@@ -65,7 +65,7 @@ def _get_transform(task):
     else:
         raise ValueError
         
-        
+        `
 def make_dataset(task):
     transform = _get_transform(task)
     
@@ -148,7 +148,7 @@ def get_model(model_fpath, num_classes, device, model_type='res50',
     # if feature_extract:
     #     xmodel.eval()
     set_parameter_requires_grad(xmodel, feature_extract)
-    n_features = 768    
+    n_features = xmodel.config.hidden_size    
     xmodel = _adapt_model_downstream(xmodel, n_features, num_classes)
     return xmodel
     
