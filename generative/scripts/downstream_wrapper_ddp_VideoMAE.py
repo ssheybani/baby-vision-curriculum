@@ -243,7 +243,7 @@ def DDP_process(rank, world_size, seed, args):#protocol, seed):
 
     # Make the dataloaders and samplers
     sampler_shuffle = True #for the distributed dampler
-    batch_size = 64
+    batch_size = 8
     pin_memory = True
     num_epochs = num_epochs
     num_workers = 7 #number_of_cpu-1#32
