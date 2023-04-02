@@ -52,7 +52,7 @@ def _get_transform(task):
             # tr.CenterCrop(224),
             tr.ToTensor(),
             # tr.ConvertImageDtype(torch.float32),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+            tr.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
             )
 
     elif task=='stl10':
