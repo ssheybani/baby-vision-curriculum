@@ -115,7 +115,8 @@ def set_parameter_requires_grad(model, feature_extracting):
 #     return model
 def _adapt_model_downstream(model, n_features, n_readout):
     model.fc = torch.nn.Linear(n_features, n_readout)
-    # _ = model.float()
+    _ = model.float()
+
     return model
 
 def get_model(model_fpath, num_classes, device, model_type='res50',
