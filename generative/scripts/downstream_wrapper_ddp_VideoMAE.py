@@ -50,9 +50,9 @@ def _get_transform(task):
         return tr.Compose([
             # tr.Resize(224),
             # tr.CenterCrop(224),
-            tr.ToTensor(),
+            tr.ToTensor()]
             # tr.ConvertImageDtype(torch.float32),
-            tr.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+            # tr.Normalize(mean,std)]
             )
 
     elif task=='stl10':
