@@ -6,7 +6,7 @@ import sys, os, inspect
 
 if 'BigRed200' in os.getcwd().split('/'):
 #     print('Running on BigRed200')
-    sys.path.insert(0,'/N/slate/hhansar/hgenv/lib/python3.10/site-packages')
+    sys.path.insert(0,'/N/slate/hhansar/hfenv/lib/python3.10/site-packages')
     
 import argparse
 import numpy as np
@@ -168,7 +168,7 @@ def get_model(model_fpath, num_classes, device, model_type='res50',
     # xmodel = _adapt_model_downstream(xmodel, n_features, num_classes)
     xmodel = CIFAR10Benchmark(xmodel, num_classes)
     return xmodel
-    
+        
     
 def get_optimizer(model, feature_extract):
     params_to_update = model.parameters()
