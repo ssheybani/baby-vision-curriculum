@@ -13,11 +13,11 @@ import numpy as np
 from pathlib import Path
 import torch, torchvision
 import torchvision.transforms as tr
-
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.multiprocessing as mp
+import torch.nn as nn
 
 SCRIPT_DIR = os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe()))) #os.getcwd() #
 # print('cwd: ',SCRIPT_DIR)
