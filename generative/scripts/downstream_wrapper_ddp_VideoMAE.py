@@ -141,6 +141,20 @@ def get_model(model_fpath, num_classes, device, model_type='res50',
     #     del xload
         
     #  #set to False if retraining the while network
+    class CIFAR10Benchmark(nn.Module):
+        def __init__(self, backbone, num_classes):
+            super().__init__()
+    #         self.flatten = nn.Flatten()
+            self.backbone = backbone
+            self.classifier = nn.Linear(backbone.config.hidden_size, num_classes)
+
+        def forward(self, x):
+    #         x = self.flatten(x)
+            outputs = self.backbone(x)
+            pooled_output = outputs.last_hidden_state[:, 0]
+            logits = self.classifier(pooled_output)
+            return logits
+
     config = VideoMAEConfig()
     xmodel = VideoMAEModel(config)
     xload = torch.load(model_fpath, map_location=torch.device(device))
@@ -151,7 +165,8 @@ def get_model(model_fpath, num_classes, device, model_type='res50',
     #     xmodel.eval()
     set_parameter_requires_grad(xmodel, feature_extract)
     n_features = xmodel.config.hidden_size    
-    xmodel = _adapt_model_downstream(xmodel, n_features, num_classes)
+    # xmodel = _adapt_model_downstream(xmodel, n_features, num_classes)
+    xmodel = CIFAR10Benchmark(xmodel, num_classes)
     return xmodel
     
     
