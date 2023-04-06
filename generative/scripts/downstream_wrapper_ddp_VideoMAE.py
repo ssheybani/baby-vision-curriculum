@@ -12,8 +12,8 @@ import argparse
 import numpy as np
 from pathlib import Path
 import torch, torchvision
-import torchvision.transforms.v2 as tr
 torchvision.disable_beta_transforms_warning()
+import torchvision.transforms.v2 as tr
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
