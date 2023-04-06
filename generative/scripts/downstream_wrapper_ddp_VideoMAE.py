@@ -50,7 +50,7 @@ def _get_transform(task):
         return tr.Compose([
             # tr.Resize(224),
             # tr.CenterCrop(224),
-            tr.ToTensor()]
+            tr.ToImageTensor()]
             # tr.ConvertImageDtype(torch.float32),
             # tr.Normalize(mean,std)]
             )
