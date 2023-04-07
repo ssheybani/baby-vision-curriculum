@@ -156,8 +156,8 @@ def get_model(model_fpath, num_classes, device, model_type='res50',
             logits = self.classifier(pooled_output)
             return logits
 
-    config = VideoMAEConfig(hidden_size = 384, num_hidden_layers = 12, num_attention_heads = 6)
-    xmodel = VideoMAEModel(config)
+    # config = VideoMAEConfig(hidden_size = 384, num_hidden_layers = 12, num_attention_heads = 6)
+    xmodel = VideoMAEModel("MCG-NJU/videomae-base")
     xload = torch.load(model_fpath, map_location=torch.device(device))
     xmodel.load_state_dict(xload)
     del xload
