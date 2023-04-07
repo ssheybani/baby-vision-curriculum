@@ -288,7 +288,7 @@ def DDP_process(rank, world_size, seed, args):#protocol, seed):
     
     #Where to put nvidia-smi
     print("GPU Memory occupied :-")
-    torch.cuda.memory_allocated()
+    print(torch.cuda.memory_allocated())
     cleanup()
     
     
