@@ -1,6 +1,7 @@
 #!/bin/bash
 #####  Constructed by HPC everywhere #####
 #SBATCH --mail-user=sheybani@iu.edu
+#SBATCH -A r00117
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=80
