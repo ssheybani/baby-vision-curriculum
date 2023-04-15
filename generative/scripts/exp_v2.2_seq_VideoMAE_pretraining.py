@@ -385,8 +385,8 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     # best_model_wts = deepcopy(model.state_dict())
     best_loss = float('inf')
     
-    num_patches_per_frame = (model.config.image_size // model.config.patch_size) ** 2
-    model_seq_length = (num_frames // model.config.tubelet_size) * num_patches_per_frame
+    num_patches_per_frame = (xmodel.config.image_size // xmodel.config.patch_size) ** 2
+    model_seq_length = (num_frames // xmodel.config.tubelet_size) * num_patches_per_frame
     for i_ep in range(num_epochs):
         if verbose:
             print('Epoch {}/{}'.format(i_ep, num_epochs - 1))
