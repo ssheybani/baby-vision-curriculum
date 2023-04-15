@@ -215,7 +215,6 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
 
     """
     protocol = args.prot
-    aug_arg = args.aug
     seed = args.data_seed
     n_epoch = args.n_epoch
     script_arg = args.script
