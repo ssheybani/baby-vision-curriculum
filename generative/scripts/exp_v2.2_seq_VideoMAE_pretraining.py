@@ -313,7 +313,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     # fname_parts = get_fnames(subjnames,
     #                          n_frames=150000, shuffle=False, vid_root=None)
     # fname_parts = get_fnames_v2_1(subjnames, n_chunks, n_frames, 
-                                  chunk_size, sample_strategy=sample_strategy, vid_root=None)
+                                  # chunk_size, sample_strategy=sample_strategy, vid_root=None)
     
     # print('data is split. subj_parts =', subjnames)
     # print('n_frames = ', len(fname_parts[0]), 
@@ -534,6 +534,7 @@ if __name__ == '__main__':
     n_gpu = torch.cuda.device_count()
     world_size= n_gpu
 
+    
     mp.spawn(
             DDP_process,
             args=(world_size, args),#prot_arg, seed_arg),
