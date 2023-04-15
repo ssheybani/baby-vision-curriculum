@@ -165,7 +165,7 @@ def make_dataset(subj_dirs, **kwargs):
 def get_model(image_size, num_frames, hidden_size, intermediate_size, num_attention_heads):
     config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
                                          num_frames=num_frames, tubelet_size=2, 
-                                         hidden_size=hidden_size, num_hidden_layers=12, num_attention_heads=num_atention_heads,
+                                         hidden_size=hidden_size, num_hidden_layers=12, num_attention_heads=num_attention_heads,
                                          intermediate_size=intermediate_size, initializer_range=0.02,
                                          use_mean_pooling=True, decoder_num_attention_heads=6,
                                          decoder_hidden_size=384, decoder_num_hidden_layers=4, 
@@ -255,7 +255,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     num_frames = 16
     hidden_size = 768 #384
     intermediate_size = 3072 #4*384
-    num_atention_heads = 12 #6
+    num_attention_heads = 12 #6
     xmodel = get_model(image_size, num_frames, hidden_size, intermediate_size, num_attention_heads)
     xmodel = xmodel.to(rank)
     xmodel = DDP(xmodel, device_ids=[rank], output_device=rank, 
