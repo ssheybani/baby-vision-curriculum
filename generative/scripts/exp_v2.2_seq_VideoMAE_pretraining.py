@@ -406,7 +406,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
 #         break
                 optimizer.zero_grad()
                 bool_masked_pos = torch.randint(0, 2, (batch_size, model_seq_length)).bool()
-                outputs = model(inputs, bool_masked_pos=bool_masked_pos)
+                outputs = xmodel(inputs, bool_masked_pos=bool_masked_pos)
 
                 loss = outputs.loss
                 if phase == 'train':
