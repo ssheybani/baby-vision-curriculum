@@ -257,7 +257,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     hidden_size = 768 #384
     intermediate_size = 3072 #4*384
     num_attention_heads = 12 #6
-    xmodel = get_model(image_size, num_frames, hidden_size, intermediate_size, num_attention_heads)
+    xmodel = get_model(image_size=image_size, num_frames=num_frames, hidden_size=hidden_size, num_attention_heads=num_attention_heads, intermediate_size=intermediate_size)
     num_patches_per_frame = (xmodel.config.image_size // xmodel.config.patch_size) ** 2
     model_seq_length = (num_frames // xmodel.config.tubelet_size) * num_patches_per_frame
     xmodel = xmodel.to(rank)
