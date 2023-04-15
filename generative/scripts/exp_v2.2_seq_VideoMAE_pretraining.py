@@ -510,10 +510,10 @@ if __name__ == '__main__':
     #                        default=2,
     #                        help='neighborhood for selecting the positive sample')
     
-    parser.add_argument('--data_groups_shape',
-                           type=str,
-                           default='3,3',
-                           help='')
+    # parser.add_argument('--data_groups_shape',
+    #                        type=str,
+    #                        default='3,3',
+    #                        help='')
 
     parser.add_argument('--script',
                            type=str,
