@@ -475,15 +475,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Network on HeadCam Data')
 
     # Add the arguments
-    parser.add_argument('-prot',
+    parser.add_argument('--prot',
                            type=str,
                            help='The order of developmental stage to train the model on')
 
-    parser.add_argument('-data_seed',
+    parser.add_argument('--data_seed',
                            type=int,
                            help='')
     
-    parser.add_argument('-savedir',
+    parser.add_argument('--savedir',
                            type=str,
                            help='directory to save the results')
     
@@ -491,7 +491,7 @@ if __name__ == '__main__':
     #                        type=str,
     #                        help='apply data augmentation or not:y or n')
     
-    parser.add_argument('-other_seed',
+    parser.add_argument('--other_seed',
                            type=int,
                            help='A seed used as both model ID and a random seed')
     
