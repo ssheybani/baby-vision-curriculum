@@ -37,7 +37,7 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.multiprocessing as mp
 from ddputils import is_main_process, save_on_master, setup_for_distributed
-
+import transformers
 
 from PIL import Image
 from torch.utils.data import Dataset
