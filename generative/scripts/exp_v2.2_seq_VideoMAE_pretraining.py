@@ -124,7 +124,8 @@ def make_dataset(subj_dirs, **kwargs):
     n_groupframes=kwargs['n_groupframes']#1450000
     ds_rate = kwargs['ds_rate']
     jpg_root = kwargs['jpg_root']
-    transform = _get_transform()
+    image_size = kwargs['image_size']
+    transform = _get_transform(image_size)
     gx_fpathlist = []
     for i_subj, subjdir in enumerate(tqdm(subj_dirs)):
         gx_fpathlist += get_fpathlist(jpg_root, subjdir, ds_rate=ds_rate)
@@ -345,7 +346,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     seq_len = num_frames #equivalent to num_frames in VideoMAE()
     #     ds_rate = 1
     n_samples = None#10 #50000
-    datasets = make_dataset(g0, seq_len=seq_len, jpg_root=jpg_root, ds_rate=ds_rate, n_groupframes=n_groupframes)
+    datasets = make_dataset(g0, seq_len=seq_len, jpg_root=jpg_root, ds_rate=ds_rate, n_groupframes=n_groupframes, image_size=image_size)
     # sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, 
                                      # shuffle=sampler_shuffle, seed=seed)
     # batch_size = 1
