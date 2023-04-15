@@ -365,7 +365,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     #     prefetch_factor=int(1.5*batch_size/num_workers))
 
 
-    print('len dset, len dloader: ', len(datasets['train']), len(dataloader['train']))
+    print('len dset, len dloader: ', len(datasets['train']), len(dataloaders['train']))
 #         print(dataset.__getitem__(22).shape)
     print('dataloaders created') #@@@
         
