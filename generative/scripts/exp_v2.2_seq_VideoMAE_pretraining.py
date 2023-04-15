@@ -258,6 +258,8 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     intermediate_size = 3072 #4*384
     num_attention_heads = 12 #6
     xmodel = get_model(image_size, num_frames, hidden_size, intermediate_size, num_attention_heads)
+    num_patches_per_frame = (xmodel.config.image_size // xmodel.config.patch_size) ** 2
+    model_seq_length = (num_frames // xmodel.config.tubelet_size) * num_patches_per_frame
     xmodel = xmodel.to(rank)
     xmodel = DDP(xmodel, device_ids=[rank], output_device=rank, 
                    find_unused_parameters=False)
@@ -385,8 +387,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     # best_model_wts = deepcopy(model.state_dict())
     best_loss = float('inf')
     
-    num_patches_per_frame = (xmodel.config.image_size // xmodel.config.patch_size) ** 2
-    model_seq_length = (num_frames // xmodel.config.tubelet_size) * num_patches_per_frame
+    
     for i_ep in range(num_epochs):
         if verbose:
             print('Epoch {}/{}'.format(i_ep, num_epochs - 1))
