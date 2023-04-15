@@ -15,8 +15,6 @@ SCRIPT_DIR = os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentfra
 #os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))
 util_path = os.path.normpath(os.path.join(SCRIPT_DIR, '..', 'util'))
 sys.path.insert(0, util_path)    
-import datautils
-
 import numpy as np
 import torch, torchvision
 # import torchvision.transforms as tr
@@ -40,7 +38,6 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.multiprocessing as mp
 from ddputils import is_main_process, save_on_master, setup_for_distributed
 
-from datautils import to_static, to_seq, to_batchseq, get_train_test_splits
 
 from PIL import Image
 from torch.utils.data import Dataset
