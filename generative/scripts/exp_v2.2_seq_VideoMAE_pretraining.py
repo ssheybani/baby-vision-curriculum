@@ -263,7 +263,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     mask_ratio = 0.9
     num_masks = int(mask_ratio * model_seq_length)
     xmodel = xmodel.to(rank)
-    print("model device", xmodel.get_device())
+    print("model device", xmodel.device)
     xmodel = DDP(xmodel, device_ids=[rank], output_device=rank, 
                    find_unused_parameters=False)
     
