@@ -418,9 +418,10 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
                     np.random.shuffle(bool_masked[i])
                 bool_masked_pos = torch.from_numpy(bool_masked).bool()
                 bool_masked_pos = bool_masked_pos.to(rank)
-                print(bool_masked_pos.get_device())
+                print("bool_masked_pos device", bool_masked_pos.get_device())
                 inputs = inputs.to(rank)
-                print(inputs.get_device())
+                print("input device", inputs.get_device())
+                print("model device", xmodel.get_device())
                 # bool_masked_pos = torch.randint(0, 2, (batch_size, model_seq_length)).bool()
                 outputs = xmodel(inputs, bool_masked_pos=bool_masked_pos)
                 loss = outputs.loss
