@@ -417,6 +417,8 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
                 for i in range(bool_masked.shape[0]):
                     np.random.shuffle(bool_masked[i])
                 bool_masked_pos = torch.from_numpy(bool_masked).bool()
+                bool_masked_pos = bool_masked_pos.to(rank)
+                inputs = inputs.to(rank)
                 # bool_masked_pos = torch.randint(0, 2, (batch_size, model_seq_length)).bool()
                 outputs = xmodel(inputs, bool_masked_pos=bool_masked_pos)
                 loss = outputs.loss
