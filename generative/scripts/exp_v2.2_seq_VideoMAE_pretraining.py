@@ -260,6 +260,8 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     xmodel = get_model(image_size=image_size, num_frames=num_frames, hidden_size=hidden_size, num_attention_heads=num_attention_heads, intermediate_size=intermediate_size)
     num_patches_per_frame = (xmodel.config.image_size // xmodel.config.patch_size) ** 2
     model_seq_length = (num_frames // xmodel.config.tubelet_size) * num_patches_per_frame
+    mask_ratio = 0.9
+    num_masks = int(mask_ratio * model_seq_length)
     xmodel = xmodel.to(rank)
     xmodel = DDP(xmodel, device_ids=[rank], output_device=rank, 
                    find_unused_parameters=False)
@@ -405,7 +407,17 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
                 print(inputs.shape)
 #         break
                 optimizer.zero_grad()
-                bool_masked_pos = torch.randint(0, 2, (batch_size, model_seq_length)).bool()
+                num_zeros = model_seq_length - num_masks
+                num_ones = num_masks
+
+                bool_masked = np.zeros((batch_size, num_zeros + num_ones))
+                bool_masked[:, :num_ones] = 1
+
+                # Shuffle each array in the batch
+                for i in range(bool_masked.shape[0]):
+                    np.random.shuffle(bool_masked[i])
+                bool_masked_pos = torch.from_numpy(bool_masked).bool()
+                # bool_masked_pos = torch.randint(0, 2, (batch_size, model_seq_length)).bool()
                 outputs = xmodel(inputs, bool_masked_pos=bool_masked_pos)
                 loss = outputs.loss
                 if phase == 'train':
