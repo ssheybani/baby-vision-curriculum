@@ -450,22 +450,6 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
                 val_loss_history.append(epoch_loss.cpu().item())
             else:
                 train_loss_history.append(epoch_loss.cpu().item())        
-            # the model
-            STAGE = i_ep
-            model_fname = '_'.join(['model', protocol, 'stage', str(i_ep),
-                                    'seed',str(seed), str(other_seed)])+'.pt'
-            MODELPATH = os.path.join(model_dir,model_fname)
-            SCRIPT = script_arg
-            # TRAIN_SETS = str(subjnames)
-
-            torch.save({
-                    'stage': STAGE,
-                    'model_state_dict': xmodel.module.state_dict(),
-                    'script': SCRIPT,
-                    # 'train_sets': TRAIN_SETS
-                    }, MODELPATH)
-    #         'optimizer_state_dict': optimizer.state_dict(),
-            print('model saved at ',MODELPATH)
             
             
 
@@ -479,7 +463,22 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
 
     if is_main_process():
         results_df.to_csv(results_fpath, sep=',', float_format='%.4f')
+        # the model
+        STAGE = "g0"
+        model_fname = '_'.join(['model', protocol, 'stage', STAGE,
+                                'seed',str(seed), 'other', str(other_seed)])+'.pt'
+        MODELPATH = os.path.join(model_dir,model_fname)
+        SCRIPT = script_arg
+        # TRAIN_SETS = str(subjnames)
 
+        torch.save({
+                'stage': STAGE,
+                'model_state_dict': xmodel.module.state_dict(),
+                'script': SCRIPT,
+                # 'train_sets': TRAIN_SETS
+                }, MODELPATH)
+#         'optimizer_state_dict': optimizer.state_dict(),
+        print('model saved at ',MODELPATH)
 
     cleanup()
     
