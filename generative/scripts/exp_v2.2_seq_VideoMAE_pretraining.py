@@ -396,8 +396,8 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
             print('Epoch {}/{}'.format(i_ep, num_epochs - 1))
             print('-' * 10)
         # Each epoch has a training and validation phase
-        # for phase in ['train', 'val']:
-        for phase in ['train']:
+        
+        for phase in ['train', 'val']:
             dataloaders[phase].sampler.set_epoch(i_ep)
             if phase == 'train':
                 xmodel.train()  # Set model to training mode
