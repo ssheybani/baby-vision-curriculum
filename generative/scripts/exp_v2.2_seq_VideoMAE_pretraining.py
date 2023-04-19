@@ -287,7 +287,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     sampler_shuffle = True #@@@@ True #for the distributed dampler
     # Set the other hyperparams: n_epoch, batch_size, num_workers
     num_epochs = n_epoch #per train stage
-    batch_size = 32 #128 #For individual GPUs
+    batch_size = 16 #128 #For individual GPUs
     pin_memory = True
     num_workers = 7#int((number_of_cpu-1)/4) #2 #0#1#2#3 #
     
