@@ -439,17 +439,17 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     #store the model and results to disk
 
                 
-        if is_main_proc:
-            epoch_loss = running_loss / len(dataloaders[phase].dataset)
-            if verbose:
-                print('{} Loss: {:.4f}'.format(phase, epoch_loss.item()))
-            if phase == 'val' and epoch_loss < best_loss:
-                best_loss = epoch_loss
-                    # best_model_wts = deepcopy(model.state_dict())
-            if phase == 'val':
-                val_loss_history.append(epoch_loss.cpu().item())
-            else:
-                train_loss_history.append(epoch_loss.cpu().item())        
+            if is_main_proc:
+                epoch_loss = running_loss / len(dataloaders[phase].dataset)
+                if verbose:
+                    print('{} Loss: {:.4f}'.format(phase, epoch_loss.item()))
+                if phase == 'val' and epoch_loss < best_loss:
+                    best_loss = epoch_loss
+                        # best_model_wts = deepcopy(model.state_dict())
+                if phase == 'val':
+                    val_loss_history.append(epoch_loss.cpu().item())
+                else:
+                    train_loss_history.append(epoch_loss.cpu().item())        
             
             
 
