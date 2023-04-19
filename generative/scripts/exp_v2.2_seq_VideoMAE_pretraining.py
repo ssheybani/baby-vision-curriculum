@@ -462,7 +462,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
                                'val_loss': val_loss_history})
 
     if is_main_process():
-        results_fpath = os.path.join(model_dir,"train_val scores_g0")
+        results_fpath = os.path.join(model_dir,"train_val_scores_g0")
         results_df.to_csv(results_fpath, sep=',', float_format='%.4f')
         # the model
         STAGE = "g0"
