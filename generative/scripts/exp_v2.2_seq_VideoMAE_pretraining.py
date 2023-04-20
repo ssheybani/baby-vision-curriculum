@@ -351,7 +351,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     seq_len = num_frames #equivalent to num_frames in VideoMAE()
     #     ds_rate = 1
     n_samples = None#10 #50000
-    datasets = make_dataset(g0, seq_len=seq_len, jpg_root=jpg_root, ds_rate=ds_rate, n_groupframes=n_groupframes, image_size=image_size)
+    datasets = make_dataset(g2, seq_len=seq_len, jpg_root=jpg_root, ds_rate=ds_rate, n_groupframes=n_groupframes, image_size=image_size)
     # sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, 
                                      # shuffle=sampler_shuffle, seed=seed)
     # batch_size = 1
@@ -462,10 +462,10 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
                                'val_loss': val_loss_history})
 
     if is_main_process():
-        results_fpath = os.path.join(model_dir,"train_val_scores_g0")
+        results_fpath = os.path.join(model_dir,"train_val_scores_g2")
         results_df.to_csv(results_fpath, sep=',', float_format='%.4f')
         # the model
-        STAGE = "g0"
+        STAGE = "g2"
         model_fname = '_'.join(['model', protocol, 'stage', STAGE,
                                 'seed',str(seed), 'other', str(other_seed)])+'.pt'
         MODELPATH = os.path.join(model_dir,model_fname)
