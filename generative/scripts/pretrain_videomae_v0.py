@@ -306,15 +306,17 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     ds_rate = 1
 
     n_groupframes = 1450000 # minimum number of frames across age groups
-
     g0='008MS+009SS_withrotation+010BF_withrotation+011EA_withrotation+012TT_withrotation+013LS+014SN+015JM+016TF+017EW_withrotation'
     g1='026AR+027SS+028CK+028MR+029TT+030FD+031HW+032SR+033SE+034JC_withlighting'
     g2='043MP+044ET+046TE+047MS+048KG+049JC+050AB+050AK_rotation+051DW'
+    
 # Total number of frames in each age group: g0=1.68m, g1=1.77m, g2=1.45m
 
     g0 = g0.split('+')
     g1 = g1.split('+')
-    g2 = g2.split('+')                                               
+    g2 = g2.split('+')
+    group_dict = {"g0":g0, "g1":g1, "g2":g2}
+    group = group_dict.get(protocol)                                               
     # for i_p, fname_part in enumerate(fname_parts):
         # perform the training
         # ideally could be replaced with a line like this:
@@ -328,7 +330,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     seq_len = num_frames #equivalent to num_frames in VideoMAE()
     #     ds_rate = 1
     n_samples = None#10 #50000
-    datasets = make_dataset(g2, seq_len=seq_len, jpg_root=jpg_root, ds_rate=ds_rate, n_groupframes=n_groupframes, image_size=image_size)
+    datasets = make_dataset(group, seq_len=seq_len, jpg_root=jpg_root, ds_rate=ds_rate, n_groupframes=n_groupframes, image_size=image_size)
     # sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, 
                                      # shuffle=sampler_shuffle, seed=seed)
     # batch_size = 1
@@ -425,12 +427,11 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
                                'val_loss': val_loss_history})
 
     if is_main_process():
-        results_fpath = os.path.join(model_dir,"train_val_scores_g2")
+        results_fpath = os.path.join(model_dir,f"train_val_scores_{protocol}_seed_{seed}")
         results_df.to_csv(results_fpath, sep=',', float_format='%.4f')
         # the model
-        STAGE = "g2"
-        model_fname = '_'.join(['model', protocol, 'stage', STAGE,
-                                'seed',str(seed), 'other', str(other_seed)])+'.pt'
+        # STAGE = "g2"
+        model_fname = '_'.join(['model', protocol, 'seed',str(seed), 'other', str(other_seed)])+'.pt'
         MODELPATH = os.path.join(model_dir,model_fname)
         SCRIPT = script_arg
         # TRAIN_SETS = str(subjnames)
