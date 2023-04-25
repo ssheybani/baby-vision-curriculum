@@ -9,7 +9,7 @@ import sys, os, inspect
 
 if 'BigRed200' in os.getcwd().split('/'):
 #     print('Running on BigRed200')
-    sys.path.insert(0,'/N/project/baby_vision_curriculum/pythonenvs/hfenv/lib/python3.10/site-packages')
+    sys.path.insert(0,'/N/slate/hhansar/hfenv/lib/python3.10/site-packages')
 SCRIPT_DIR = os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe()))) #os.getcwd() #
 # print('cwd: ',SCRIPT_DIR)
 #os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))
@@ -17,8 +17,8 @@ util_path = os.path.normpath(os.path.join(SCRIPT_DIR, '..', 'util'))
 sys.path.insert(0, util_path)    
 import numpy as np
 import torch, torchvision
-import torchvision.transforms as tr
-# from torchvision import transforms as tr
+# import torchvision.transforms as tr
+from torchvision import transforms as tr
 from torch import nn
 from torch.nn import functional as F
 import os
