@@ -14,7 +14,8 @@ SCRIPT_DIR = os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentfra
 # print('cwd: ',SCRIPT_DIR)
 #os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))
 util_path = os.path.normpath(os.path.join(SCRIPT_DIR, '..', 'util'))
-sys.path.insert(0, util_path)    
+sys.path.insert(0, util_path)
+os.environ['OPENBLAS_NUM_THREADS'] = '10' #@@@@ to help with the num_workers issue    
 import numpy as np
 import torch, torchvision
 # import torchvision.transforms as tr
@@ -230,9 +231,6 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
         # model_dir = r"/N/scratch/sheybani/trainedmodels/multistage/simclr/aug23/"
     else:
         model_dir = args.savedir
-
-    os.environ['OPENBLAS_NUM_THREADS'] = '10' #@@@@ to help with the num_workers issue
-    
     
     setup(rank, world_size) # setup the process groups
     print('Workers assigned.')
