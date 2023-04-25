@@ -15,7 +15,8 @@ SCRIPT_DIR = os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentfra
 #os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))
 util_path = os.path.normpath(os.path.join(SCRIPT_DIR, '..', 'util'))
 sys.path.insert(0, util_path)
-os.environ['OPENBLAS_NUM_THREADS'] = '10' #@@@@ to help with the num_workers issue    
+os.environ['OPENBLAS_NUM_THREADS'] = '10' #@@@@ to help with the num_workers issue
+os.environ['OMP_NUM_THREADS'] = '10'    
 import numpy as np
 import torch, torchvision
 # import torchvision.transforms as tr
