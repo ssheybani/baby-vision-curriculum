@@ -17,8 +17,8 @@ util_path = os.path.normpath(os.path.join(SCRIPT_DIR, '..', 'util'))
 sys.path.insert(0, util_path)    
 import numpy as np
 import torch, torchvision
-# import torchvision.transforms as tr
-from torchvision import transforms as tr
+import torchvision.transforms as tr
+# from torchvision import transforms as tr
 from torch import nn
 from torch.nn import functional as F
 import os
