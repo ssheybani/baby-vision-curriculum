@@ -9,7 +9,7 @@ import sys, os, inspect
 
 if 'BigRed200' in os.getcwd().split('/'):
 #     print('Running on BigRed200')
-    sys.path.insert(0,'/N/slate/hhansar/hfenv/lib/python3.10/site-packages')
+    sys.path.insert(0,'/N/project/baby_vision_curriculum/pythonenvs/hfenv/lib/python3.10/site-packages')
 SCRIPT_DIR = os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe()))) #os.getcwd() #
 # print('cwd: ',SCRIPT_DIR)
 #os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))
