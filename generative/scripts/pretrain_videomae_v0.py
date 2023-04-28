@@ -295,7 +295,8 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     g1 = g1.split('+')
     g2 = g2.split('+')
     group_dict = {"g0":g0, "g1":g1, "g2":g2}
-    group = group_dict.get(protocol)                                               
+    group = group_dict.get(protocol)
+    print(group)                                               
     # for i_p, fname_part in enumerate(fname_parts):
         # perform the training
         # ideally could be replaced with a line like this:
