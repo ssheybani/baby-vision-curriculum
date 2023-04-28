@@ -317,8 +317,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
                      for x in ['train', 'val']}
     dataloaders = {x: torch.utils.data.DataLoader(
         datasets[x], batch_size=batch_size, pin_memory=pin_memory, 
-        num_workers=num_workers, shuffle=False, sampler=samplers_dict[x],
-        prefetch_factor=int(1.5*batch_size/num_workers), drop_last=True)
+        num_workers=num_workers, shuffle=False, sampler=samplers_dict[x], drop_last=True)
                         for x in ['train', 'val']}
 
 
