@@ -1,10 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# Building off of exp_v2.1_seq.py
-# - predictive loss
-
-
 import sys, os, inspect
 
 if 'BigRed200' in os.getcwd().split('/'):
@@ -250,7 +243,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     num_epochs = n_epoch #per train stage
     batch_size = 16 #128 #For individual GPUs
     pin_memory = True
-    num_workers = 7#int((number_of_cpu-1)/4) #2 #0#1#2#3 #
+    num_workers = 4#int((number_of_cpu-1)/4) #2 #0#1#2#3 #
     
     print('n cpu: ', number_of_cpu, ' n workers: ', num_workers)
     
