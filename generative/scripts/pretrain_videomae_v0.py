@@ -153,7 +153,9 @@ def get_lr(optimizer):
     
 def setup(rank, world_size):    
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12355'    
+    os.environ['MASTER_PORT'] = '12355'
+
+    os.environ['OPENBLAS_NUM_THREADS'] = '1'    
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
 
 
@@ -198,8 +200,6 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     else:
         model_dir = args.savedir
 
-    os.environ['OPENBLAS_NUM_THREADS'] = '1' #@@@@ to help with the num_workers issue
-    
     
     setup(rank, world_size) # setup the process groups
     print('Workers assigned.')
