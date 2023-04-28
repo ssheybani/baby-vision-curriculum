@@ -8,6 +8,7 @@ SCRIPT_DIR = os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentfra
 util_path = os.path.normpath(os.path.join(SCRIPT_DIR, '..', 'util'))
 sys.path.insert(0, util_path)
 os.environ['OPENBLAS_NUM_THREADS'] = '1' #@@@@ to help with the num_workers issue
+os.environ['OMP_NUM_THREADS'] = '1'
 
 import numpy as np
 import torch, torchvision
@@ -155,7 +156,8 @@ def setup(rank, world_size):
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '12355'
 
-    os.environ['OPENBLAS_NUM_THREADS'] = '1'    
+    os.environ['OPENBLAS_NUM_THREADS'] = '1'
+    os.environ['OMP_NUM_THREADS'] = '1'    
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
 
 
