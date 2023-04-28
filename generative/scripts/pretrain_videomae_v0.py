@@ -243,7 +243,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     num_epochs = n_epoch #per train stage
     batch_size = 16 #128 #For individual GPUs
     pin_memory = True
-    num_workers = 0#int((number_of_cpu-1)/4) #2 #0#1#2#3 #
+    num_workers = 2#int((number_of_cpu-1)/4) #2 #0#1#2#3 #
     
     print('n cpu: ', number_of_cpu, ' n workers: ', num_workers)
     
@@ -317,7 +317,8 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
                      for x in ['train', 'val']}
     dataloaders = {x: torch.utils.data.DataLoader(
         datasets[x], batch_size=batch_size, pin_memory=pin_memory, 
-        num_workers=num_workers, shuffle=False, sampler=samplers_dict[x], drop_last=True)
+        num_workers=num_workers, shuffle=False, sampler=samplers_dict[x],
+        prefetch_factor=int(1.5*batch_size/num_workers), drop_last=True)
                         for x in ['train', 'val']}
 
 
