@@ -131,28 +131,6 @@ def make_dataset(subj_dirs, **kwargs):
     return {'train':ImageSequenceDataset(gx_train_fpathseqlist, transform=transform),
            'val': ImageSequenceDataset(gx_val_fpathseqlist, transform=transform)}
 
-# Instantiate the model, and the optimizer
-#----------------------------------
-# def _adapt_model_simclr(model, n_features, n_out): 
-#     model.fc = torch.nn.Sequential(
-#         torch.nn.Linear(n_features, n_out), 
-#         torch.nn.ReLU(), 
-#         torch.nn.Linear(n_out, n_out)) 
-#     _ = model.float()
-#     return model
-
-
-
-# def get_model(backbone_arg):
-#     if backbone_arg =='res50':
-#         xmodel = torchvision.models.resnet50(pretrained=False)
-#         n_features, n_out = 2048, 2048
-#     elif backbone_arg =='res18':
-#         xmodel = torchvision.models.resnet18(pretrained=False)
-#         n_features, n_out = 512, 2048
-#     xmodel = _adapt_model_simclr(xmodel, n_features, n_out)
-#     return xmodel
-
 def get_model(image_size, num_frames, hidden_size, intermediate_size, num_attention_heads):
     config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
                                          num_frames=num_frames, tubelet_size=2, 
@@ -164,21 +142,18 @@ def get_model(image_size, num_frames, hidden_size, intermediate_size, num_attent
     # config
     model = transformers.VideoMAEForPreTraining(config)
     return model
-# def get_criterion(temperature=0.1):
 
-    # return partial(info_nce_loss, temperature)
+
 
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:
         return param_group['lr']
     
-
-
-
 def setup(rank, world_size):    
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '12355'    
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
+
 
 def cleanup():
     dist.destroy_process_group()
@@ -221,7 +196,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     else:
         model_dir = args.savedir
 
-    os.environ['OPENBLAS_NUM_THREADS'] = '10' #@@@@ to help with the num_workers issue
+    os.environ['OPENBLAS_NUM_THREADS'] = '1' #@@@@ to help with the num_workers issue
     
     
     setup(rank, world_size) # setup the process groups
