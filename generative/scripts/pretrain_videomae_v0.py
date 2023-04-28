@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# Building off of exp_v2.1_seq.py
+# - predictive loss
+
+
 import sys, os, inspect
 
 if 'BigRed200' in os.getcwd().split('/'):
