@@ -1,5 +1,6 @@
 # added in v2.1:
 # Added the choice of SGD
+# Added adult group
 
 
 import sys, os
@@ -18,11 +19,6 @@ os.environ['OMP_NUM_THREADS'] = '1'  #10
 import numpy as np
 import torch, torchvision
 from torchvision import transforms as tr
-# from torch import nn
-# from torch.nn import functional as F
-import os
-# import random
-# import time
 from tqdm import tqdm
 from pathlib import Path
 # import math
@@ -41,6 +37,7 @@ from ddputils import is_main_process, save_on_master, setup_for_distributed
 
 # from PIL import Image
 from torch.utils.data import Dataset
+import random
 
 def get_fpathlist(vid_root, subjdir, ds_rate=1):
     """
@@ -79,7 +76,7 @@ class ImageSequenceDataset(Dataset):
     
 def get_train_val_split(fpathlist, val_ratio=0.1):
     """
-    Splits the list of filepaths into a train list and test list
+    Splits the list of filepaths into a train list and val list
     """
     n_fr = len(fpathlist)
     val_size = int(n_fr*val_ratio)
@@ -104,7 +101,10 @@ def get_fpathseqlist(fpathlist, seq_len, ds_rate=1, n_samples=None):
         sample_stride = sample_len
     else:
         assert type(n_samples)==int
+        assert len(fpathlist)>n_samples
         sample_stride = int(len(fpathlist)/n_samples)
+        # for adult group, sample_stride ~=10. i.e. each frame contributes to more than 1 sample sequence, 
+        # but doesn't appear in the same index of the sequence.
 
     fpathseqlist = [fpathlist[i:i+sample_len:ds_rate] 
                     for i in range(0, n_samples*sample_stride, sample_stride)]
@@ -144,14 +144,24 @@ def make_dataset(subj_dirs, **kwargs):
     gx_fpathlist = []
     for i_subj, subjdir in enumerate(tqdm(subj_dirs)):
         gx_fpathlist += get_fpathlist(jpg_root, subjdir, ds_rate=ds_rate)
-    gx_fpathlist = gx_fpathlist[:n_groupframes]
+    
+    if len(gx_fpathlist)>=n_groupframes:
+        gx_fpathlist = gx_fpathlist[:n_groupframes]
+        # 1450000/16 = 90625 => n_trainsamples=81560, n_valsamples= 9060
+        # 1274 iterations of train. 141 iterations of test. 
+        n_trainsamples = None
+        n_valsamples = None
+    else:
+        gx_fpathlist = gx_fpathlist # for adult group
+        n_trainsamples = int(0.9*n_groupframes/seq_len) #81k
+        n_valsamples = None
 
     # Train-val split
     gx_train_fp, gx_val_fp = get_train_val_split(gx_fpathlist, val_ratio=0.1)
 
 
-    gx_train_fpathseqlist = get_fpathseqlist(gx_train_fp, seq_len, ds_rate=1, n_samples=None)
-    gx_val_fpathseqlist = get_fpathseqlist(gx_val_fp, seq_len, ds_rate=1, n_samples=None)
+    gx_train_fpathseqlist = get_fpathseqlist(gx_train_fp, seq_len, ds_rate=1, n_samples=n_trainsamples)
+    gx_val_fpathseqlist = get_fpathseqlist(gx_val_fp, seq_len, ds_rate=1, n_samples=n_valsamples)
     
     return {'train':ImageSequenceDataset(gx_train_fpathseqlist, transform=transform),
            'val': ImageSequenceDataset(gx_val_fpathseqlist, transform=transform)}
@@ -265,7 +275,7 @@ def DDP_process(rank, world_size, args, verbose=True):
     
     other_seed = args.other_seed #np.random.randint(1000)
     torch.manual_seed(other_seed)
-    
+    random.seed(args.data_seed)
     
     number_of_cpu = len(os.sched_getaffinity(0))#multiprocessing.cpu_count() #joblib.cpu_count()
     
@@ -327,17 +337,26 @@ def DDP_process(rank, world_size, args, verbose=True):
     g0='008MS+009SS+010BF+011EA+012TT+013LS+014SN+015JM+016TF+017EW'
     g1='026AR+027SS+028CK+028MR+029TT+030FD+031HW+032SR+033SE+034JC'
     g2='043MP+044ET+046TE+047MS+048KG+049JC+050AB+050AK+051DW'
+    g3='BR+CW+EA+ED+JB+KI+LS+SB+TR'
 #     g0='008MS+009SS_withrotation+010BF_withrotation+011EA_withrotation+012TT_withrotation+013LS+014SN+015JM+016TF+017EW_withrotation'
 #     g1='026AR+027SS+028CK+028MR+029TT+030FD+031HW+032SR+033SE+034JC_withlighting'
 #     g2='043MP+044ET+046TE+047MS+048KG+049JC+050AB+050AK_rotation+051DW'
     
 # Total number of frames in each age group: g0=1.68m, g1=1.77m, g2=1.45m
 
+    
     g0 = g0.split('+')
     g1 = g1.split('+')
     g2 = g2.split('+')
-    group_dict = {"g0":g0, "g1":g1, "g2":g2}
-    group = group_dict.get(train_group)
+    g3 = g3.split('+')
+    
+    gRand=[]
+    for gx in [g0,g1,g2,g3]:
+        gRand.extend(random.sample(gx, 3))
+    random.shuffle(gRand)
+    
+    group_dict = {"g0":g0, "g1":g1, "g2":g2, "g3":g3, 'gr':gRand}
+    group = group_dict.get(args.train_group)
     print(group)                                               
     # for i_p, fname_part in enumerate(fname_parts):
         # perform the training
@@ -396,7 +415,7 @@ def DDP_process(rank, world_size, args, verbose=True):
             running_loss = torch.tensor([0.0], device=rank)
             
             i_iter,print_interval =0,10
-#             i_break, print_interval = 400,1 #@@@ debugging
+#             i_break, print_interval = 10,1 #@@@@@@@@@@@@@ debugging
             for inputs in tqdm(dataloaders[phase]):
 #                 print(inputs.shape)
                 optimizer.zero_grad()
@@ -488,7 +507,7 @@ if __name__ == '__main__':
     # Add the arguments
     parser.add_argument('-train_group',
                            type=str,
-                           help='The age group on which the model gets trained. g0 or g1 or g2')
+                           help='The age group on which the model gets trained. g0 or g1 or g2 or rand')
 
     parser.add_argument('-jpg_root',
                            type=str,

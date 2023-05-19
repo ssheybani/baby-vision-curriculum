@@ -130,3 +130,5 @@ dmypy.json
 
 #saber: project-specific
 job*
+modelvshuman/
+*.pkl

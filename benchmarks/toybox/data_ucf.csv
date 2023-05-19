@@ -1,0 +1,40 @@
+fname,tag,Curriculum,Iteration,Accuracy
+embeddings_model_gr_seed_213_other_213_sgd,gr,Random,5000,0.15214919263133955
+embeddings_model_g0_seed_211_other_211_sgd,g0,Dev.,5000,0.2624516715942688
+embeddings_model_g2_seed_211_other_211_sgd,g2,Anti-Dev.,5000,0.15556060950648168
+embeddings_model_g3_seed_212_other_212_sgd,ga,Adult,5000,0.15692517625653854
+embeddings_model_g2_seed_213_other_213_sgd,g2,Anti-Dev.,5000,0.1539686149647487
+embeddings_model_g3_seed_211_other_211_sgd,ga,Adult,5000,0.1635205822151467
+embeddings_model_gr_seed_212_other_212_sgd,gr,Random,5000,0.17057084375710713
+embeddings_model_g2_seed_212_other_212_sgd,g2,Anti-Dev.,5000,0.15556060950648168
+embeddings_model_g0_seed_213_other_213_sgd,g0,Dev.,5000,0.2554014100523084
+embeddings_model_g0_seed_212_other_212_sgd,g0,Dev.,5000,0.2569934045940414
+embeddings_model_gr_seed_211_other_211_sgd,gr,Random,5000,0.13531953604730498
+embeddings_model_gr_seed_211_other_211_sgd_pre.gr,grgr,Random,10000,0.25949511030247896
+embeddings_model_g1_seed_211_other_211_sgd_pre.g0,g0g1,Dev.,10000,0.3622924721400955
+embeddings_model_g1_seed_211_other_211_sgd_pre.g3,gag1,Adult,10000,0.27063907209460997
+embeddings_model_g2_seed_212_other_212_sgd_pre.g2,g2g2,Oldest Only,10000,0.16079144871503298
+embeddings_model_g2_seed_211_other_211_sgd_pre.g2,g2g2,Oldest Only,10000,0.15919945417329998
+embeddings_model_g1_seed_211_other_211_sgd_pre.g2,g2g1,Anti-Dev.,10000,0.1582897430065954
+embeddings_model_gr_seed_213_other_213_sgd_pre.gr,grgr,Random,10000,0.2651808050943825
+embeddings_model_g2_seed_213_other_213_sgd_pre.g2,g2g2,Oldest Only,10000,0.15260404821469184
+embeddings_model_g1_seed_212_other_212_sgd_pre.g0,g0g1,Dev.,10000,0.37047987264043664
+embeddings_model_g1_seed_212_other_212_sgd_pre.g3,gag1,Adult,10000,0.2665453718444394
+embeddings_model_gr_seed_212_other_212_sgd_pre.gr,grgr,Random,10000,0.3234023197634751
+embeddings_model_g1_seed_213_other_213_sgd_pre.g0,g0g1,Dev.,10000,0.3563793495565158
+embeddings_model_g1_seed_212_other_212_sgd_pre.g2,g2g1,Anti-Dev.,10000,0.15806231521491926
+embeddings_model_g1_seed_213_other_213_sgd_pre.g2,g2g1,Anti-Dev.,10000,0.15601546508983397
+embeddings_model_gr_seed_213_other_213_sgd_pre.grgr,grgrgr,Random,15000,0.34114168751421425
+embeddings_model_g2_seed_213_other_213_sgd_pre.g0g1,g0g1g2,Dev.,15000,0.4023197634750967
+embeddings_model_g2_seed_211_other_211_sgd_pre.g0g1,g0g1g2,Dev.,15000,0.39163065726631796
+embeddings_model_gr_seed_212_other_212_sgd_pre.grgr,grgrgr,Random,15000,0.3832158289743007
+embeddings_model_g0_seed_212_other_212_sgd_pre.g2g1,g2g1g0,Anti-Dev.,15000,0.24698658176029112
+embeddings_model_g2_seed_212_other_212_sgd_pre.g2g2,g2g2g2,Oldest Only,15000,0.15305890379804413
+embeddings_model_gr_seed_211_other_211_sgd_pre.grgr,grgrgr,Random,15000,0.34273368205594723
+embeddings_model_g2_seed_213_other_213_sgd_pre.g2g2,g2g2g2,Oldest Only,15000,0.14805549238116897
+embeddings_model_g2_seed_211_other_211_sgd_pre.g3g1,gag1g2,Adult,15000,0.35296793268137366
+embeddings_model_g2_seed_211_other_211_sgd_pre.g2g2,g2g2g2,Oldest Only,15000,0.1562428928815101
+embeddings_model_g2_seed_212_other_212_sgd_pre.g0g1,g0g1g2,Dev.,15000,0.4020923356834205
+embeddings_model_g2_seed_212_other_212_sgd_pre.g3g1,gag1g2,Adult,15000,0.3520582215146691
+embeddings_model_g0_seed_213_other_213_sgd_pre.g2g1,g2g1g0,Anti-Dev.,15000,0.2406186035933591
+embeddings_model_g0_seed_211_other_211_sgd_pre.g2g1,g2g1g0,Anti-Dev.,15000,0.07664316579486014

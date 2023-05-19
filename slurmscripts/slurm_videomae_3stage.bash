@@ -48,7 +48,7 @@ init_checkpoint_path='na'
 data_seed=1102
 other_seed=1102
 script='pretrain_videomae_2.1.py'
-other_id='30fps'
+other_id='x'
 
 python /N/project/baby_vision_curriculum/github/baby-vision-curriculum/generative/scripts/pretrain_videomae_v2.1.py -train_group $train_group -jpg_root $jpg_root -savedir $savedir --init_checkpoint_path $init_checkpoint_path --ds_rate $ds_rate --mask_ratio $mask_ratio --lr $lr --batch_size $batch_size --architecture $architecture --n_epoch $n_epoch --data_seed $data_seed --other_seed $other_seed  --script $script --other_id $other_id --optim $optim 
 

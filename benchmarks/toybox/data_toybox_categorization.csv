@@ -1,0 +1,40 @@
+fname,tag,Curriculum,Iteration,Accuracy
+embeddings_gr_seed_213_sgd,gr,Random,5000,0.2510548523206751
+embeddings_g2_seed_212_sgd,g2,Anti-Dev.,5000,0.25738396624472576
+embeddings_g0_seed_213_sgd,g0,Dev.,5000,0.3509142053445851
+embeddings_g2_seed_211_sgd,g2,Anti-Dev.,5000,0.24050632911392406
+embeddings_g2_seed_213_sgd,g2,Anti-Dev.,5000,0.2320675105485232
+embeddings_g0_seed_212_sgd,g0,Dev.,5000,0.3621659634317862
+embeddings_g3_seed_212_sgd,ga,Adult,5000,0.2609001406469761
+embeddings_g0_seed_211_sgd,g0,Dev.,5000,0.34528832630098455
+embeddings_gr_seed_212_sgd,gr,Random,5000,0.3319268635724332
+embeddings_gr_seed_211_sgd,gr,Random,5000,0.26441631504922647
+embeddings_g3_seed_211_sgd,ga,Adult,5000,0.2348804500703235
+embeddings_g1_seed_212_sgd_pre.g3,gag1,Adult,10000,0.36779184247538677
+embeddings_g1_seed_211_sgd_pre.g0,g0g1,Dev.,10000,0.4085794655414909
+embeddings_gr_seed_212_sgd_pre.gr,grgr,Random,10000,0.3748241912798875
+embeddings_gr_seed_211_sgd_pre.gr,grgr,Random,10000,0.35864978902953587
+embeddings_gr_seed_213_sgd_pre.gr,grgr,Random,10000,0.34177215189873417
+embeddings_g2_seed_211_sgd_pre.g2,g2g2,Oldest Only,10000,0.2812939521800281
+embeddings_g2_seed_212_sgd_pre.g2,g2g2,Oldest Only,10000,0.26019690576652604
+embeddings_g1_seed_213_sgd_pre.g2,g2g1,Anti-Dev.,10000,0.2517580872011252
+embeddings_g1_seed_212_sgd_pre.g0,g0g1,Dev.,10000,0.4022503516174402
+embeddings_g1_seed_211_sgd_pre.g2,g2g1,Anti-Dev.,10000,0.26582278481012656
+embeddings_g1_seed_213_sgd_pre.g0,g0g1,Dev.,10000,0.4022503516174402
+embeddings_g1_seed_211_sgd_pre.g3,gag1,Adult,10000,0.36146272855133615
+embeddings_g2_seed_213_sgd_pre.g2,g2g2,Oldest Only,10000,0.26441631504922647
+embeddings_g1_seed_212_sgd_pre.g2,g2g1,Anti-Dev.,10000,0.2468354430379747
+embeddings_g2_seed_211_sgd_pre.g0g1,g0g1g2,Dev.,15000,0.40646976090014064
+embeddings_g2_seed_212_sgd_pre.g0g1,g0g1g2,Dev.,15000,0.4057665260196906
+embeddings_g2_seed_213_sgd_pre.g0g1,g0g1g2,Dev.,15000,0.4120956399437412
+embeddings_g2_seed_212_sgd_pre.g3g1,gag1g2,Adult,15000,0.41068917018284107
+embeddings_gr_seed_211_sgd_pre.grgr,grgrgr,Random,15000,0.3952180028129395
+embeddings_g0_seed_213_sgd_pre.g2g1,g2g1g0,Anti-Dev.,15000,0.3769338959212377
+embeddings_g2_seed_213_sgd_pre.g2g2,g2g2g2,Oldest Only,15000,0.24120956399437413
+embeddings_g2_seed_211_sgd_pre.g2g2,g2g2g2,Oldest Only,15000,0.23558368495077356
+embeddings_g0_seed_211_sgd_pre.g2g1,g2g1g0,Anti-Dev.,15000,0.18635724331926865
+embeddings_g2_seed_212_sgd_pre.g2g2,g2g2g2,Oldest Only,15000,0.2707454289732771
+embeddings_gr_seed_212_sgd_pre.grgr,grgrgr,Random,15000,0.4085794655414909
+embeddings_g2_seed_211_sgd_pre.g3g1,gag1g2,Adult,15000,0.37763713080168776
+embeddings_g0_seed_212_sgd_pre.g2g1,g2g1g0,Anti-Dev.,15000,0.3720112517580872
+embeddings_gr_seed_213_sgd_pre.grgr,grgrgr,Random,15000,0.3853727144866385
