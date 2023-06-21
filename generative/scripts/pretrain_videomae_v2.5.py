@@ -1,9 +1,7 @@
 # added in control: the choice of using static or shuffled frame sequence
-# added in v2.2:
-# tube masking
-# choice of adamw
-# choice of small3
-
+# added in v2.5:
+# terminate the epoch after max_epochiters=2000 is reached
+# for the control condition static, changed the val dataset to a normal one (as opposed to static dataset)
 
 import sys, os
 
@@ -17,6 +15,7 @@ sys.path.insert(0, env_root)
 # sys.path.insert(0, util_path)
 os.environ['OPENBLAS_NUM_THREADS'] = '38' #@@@@ to help with the num_workers issue
 os.environ['OMP_NUM_THREADS'] = '1'  #10
+
 
 import numpy as np
 import torch, torchvision
@@ -40,7 +39,106 @@ from ddputils import is_main_process, save_on_master, setup_for_distributed
 # from PIL import Image
 from torch.utils.data import Dataset
 import random
+from copy import deepcopy
+import json
+import itertools
+import gc
 
+# device_index = 0  # Use 0 for the first GPU, 1 for the second, and so on
+# Get the GPU properties
+
+
+def compute_grad(model, optimizer, sample, mask, rank):
+    
+    sample_new = sample.unsqueeze(0)  # prepend batch dimension for processing
+    mask_new = mask.unsqueeze(0)
+    optimizer.zero_grad()
+    outputs = model(sample_new, bool_masked_pos=mask_new)
+    loss = outputs.loss
+
+#     return torch.autograd.grad(loss, list(model.parameters()))
+    return torch.autograd.grad(loss, list(model.parameters()))
+
+
+def compute_sample_grads(model, optimizer, data, bool_masked_pos, rank):
+    """ manually process each sample with per sample gradient """
+    batch_size = len(data)
+    sample_grads = [compute_grad(model, optimizer, data[i], bool_masked_pos[i], rank) 
+                    for i in range(batch_size)]
+    sample_grads = zip(*sample_grads)
+    sample_grads = [torch.stack(shards).detach() 
+                    for shards in sample_grads]
+    return sample_grads
+
+def reduce_to_stat(arr, stat):
+    # Flatten the array
+    flattened_arr = arr.flatten()
+    
+    if stat=='hist':
+        # Define the logarithmic bin edges
+        log_bin_edges = np.logspace(start=-5, stop=0, num=101)
+
+        # Compute the histogram with logarithmic bins
+        histogram, bin_edges = np.histogram(flattened_arr, bins=log_bin_edges)
+        return histogram
+    
+    elif stat=='median':
+        return np.asarray([np.median(flattened_arr)])
+    elif stat=='norm':
+        return np.asarray([np.linalg.norm(arr)])
+    else:
+        raise ValueError
+    
+    
+def append_gradient_statistics(
+        true_iter, grad_mean_history, grad_std_history, grad_snr_history,
+        paramgr_names, paramgr_indices, sample_grads, stat='hist'):
+    grad_mean_history['iter'].append(
+        deepcopy(true_iter))
+    
+    grad_std_history['iter'].append(
+        deepcopy(true_iter))
+    
+    grad_snr_history['iter'].append(
+        deepcopy(true_iter))
+
+    for paramgr_name, paramgr_idx in zip(paramgr_names, paramgr_indices):
+        cgrads = 1000*sample_grads[paramgr_idx].cpu().numpy()
+        
+        tmp_cgmean = np.log10(
+            np.abs(cgrads.mean(axis=0))+1e-12)
+        tmp_cgstd = np.log10(
+            cgrads.std(axis=0)+1e-12)
+        tmp_cgsnr = tmp_cgmean-tmp_cgstd#np.log10((tmp_cgmean+1e-12)/(tmp_cgstd+1e-12))
+        cgrads_mean = reduce_to_stat(
+            tmp_cgmean, stat)
+        cgrads_std = reduce_to_stat(
+            tmp_cgstd, stat)
+        cgrads_snr = reduce_to_stat(
+            tmp_cgsnr, stat)
+            
+
+        grad_mean_history[paramgr_name].append(
+            deepcopy(cgrads_mean.tolist()))
+        grad_std_history[paramgr_name].append(
+            deepcopy(cgrads_std.tolist()))
+        grad_snr_history[paramgr_name].append(
+            deepcopy(cgrads_snr.tolist()))
+
+#         print('sample_grads idx, shape:', paramgr_idx, cgrads.shape,
+#           'mean:',np.argmax(cgrads_mean),
+#           'std:',np.argmax(cgrads_std),
+#           flush=True) #@@@
+        if stat!='hist':
+            print('sample_grads idx, shape:', paramgr_idx, cgrads.shape,
+              'mean:',cgrads_mean,
+              'std:',cgrads_std,
+              'snr',cgrads_snr,
+              flush=True) #@@@
+            
+    
+    return grad_mean_history, grad_std_history, grad_snr_history
+                
 def get_fpathlist(vid_root, subjdir, ds_rate=1):
     """
     # read the image files inside vid_root/subj_dir into a list. 
@@ -204,16 +302,29 @@ def _get_transform(image_size):
 #     )
 #     return image_processor
 
+def get_fold(gx_fpathlist, fold, max_folds, args):
+#     fold_size = int(len(gx_fpathlist)/max_folds)
+    segment_size = int(30*60*30/args.ds_rate)
+    
+    fold_segments = []
 
+    for i_st in range(0, len(gx_fpathlist), segment_size):
+        if (i_st // segment_size) % max_folds == fold:
+            fold_segments.append(gx_fpathlist[i_st:i_st + segment_size])
+            
+    fold_segments = list(itertools.chain.from_iterable(fold_segments))
+    return fold_segments
 
-def make_dataset(subj_dirs, **kwargs):
-    seq_len = kwargs['seq_len']
-    n_groupframes=kwargs['n_groupframes']#1450000
-    ds_rate = kwargs['ds_rate']
-    jpg_root = kwargs['jpg_root']
-    image_size = kwargs['image_size']
-    fold = kwargs['fold']
-    condition = kwargs['condition']
+def make_dataset(subj_dirs, image_size, args):
+    seq_len = args.num_frames #kwargs['seq_len']
+#     n_groupframes=kwargs['n_groupframes']#1450000
+    ds_rate = args.ds_rate #kwargs['ds_rate']
+    jpg_root = args.jpg_root #kwargs['jpg_root']
+#     image_size = kwargs['image_size']
+    fold = args.fold #kwargs['fold']
+    condition = args.condition #kwargs['condition']
+    n_trainsamples = args.n_trainsamples
+    
     transform = _get_transform(image_size)
     gx_fpathlist = []
     for i_subj, subjdir in enumerate(tqdm(subj_dirs)):
@@ -221,8 +332,7 @@ def make_dataset(subj_dirs, **kwargs):
     
     # added on May15
     max_folds = 3
-    fold_size = int(len(gx_fpathlist)/max_folds)
-    gx_fpathlist = gx_fpathlist[fold*fold_size:(fold+1)*fold_size] # for adult group
+    gx_fpathlist = get_fold(gx_fpathlist, fold, max_folds, args)
     print('Num. frames in the fold:',len(gx_fpathlist))
 
     #     if len(gx_fpathlist)>=n_groupframes:
@@ -233,7 +343,7 @@ def make_dataset(subj_dirs, **kwargs):
 #         n_valsamples = None
 #     else:
     
-    n_trainsamples = int(0.9*n_groupframes/seq_len) #81k
+    n_trainsamples = n_trainsamples #int(0.9*n_groupframes/seq_len) #81k
     n_valsamples = None #means don't do bootstraping for val. Use whatever number 0.1*len(gx_fpathlist) gives.
 
     # Train-val split
@@ -252,7 +362,9 @@ def make_dataset(subj_dirs, **kwargs):
     
     elif condition=='static':
         train_dataset = StillVideoDataset(gx_train_fpathseqlist, transform=transform)
-        val_dataset = StillVideoDataset(gx_val_fpathseqlist, transform=transform)
+        val_dataset = ImageSequenceDataset(gx_val_fpathseqlist, transform=transform, shuffle=False)
+#         StillVideoDataset(gx_val_fpathseqlist, transform=transform)
+
     else:
         train_dataset = ImageSequenceDataset(gx_train_fpathseqlist, transform=transform, shuffle=False)
         val_dataset = ImageSequenceDataset(gx_val_fpathseqlist, transform=transform, shuffle=False)
@@ -266,7 +378,7 @@ def get_config(image_size, args):
     
     if arch_kw=='base': #default
         config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=16, tubelet_size=2, 
+                                             num_frames=args.num_frames, tubelet_size=2, 
                                              hidden_size=768, num_hidden_layers=12, num_attention_heads=12,
                                              intermediate_size=3072, initializer_range=0.02,
                                              use_mean_pooling=True, decoder_num_attention_heads=6,
@@ -279,7 +391,7 @@ def get_config(image_size, args):
         num_hidden_layers = 12
         
         config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=16, tubelet_size=2, 
+                                             num_frames=args.num_frames, tubelet_size=2, 
                                              hidden_size=hidden_size, num_hidden_layers=num_hidden_layers, num_attention_heads=num_attention_heads,
                                              intermediate_size=intermediate_size)
         
@@ -290,7 +402,7 @@ def get_config(image_size, args):
         num_hidden_layers = 6
         
         config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=16, tubelet_size=2, 
+                                             num_frames=args.num_frames, tubelet_size=2, 
                                              hidden_size=hidden_size, num_hidden_layers=num_hidden_layers, num_attention_heads=num_attention_heads,
                                              intermediate_size=intermediate_size)
         
@@ -320,9 +432,9 @@ def init_model_from_checkpoint(model, checkpoint_path):
     model.load_state_dict(checkpoint['model_state_dict'])
     return model
 
-def get_optim(args):
-    if args.optim=='SGD':
-        return 
+# def get_optim(args):
+#     if args.optim=='SGD':
+#         return 
     
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:
@@ -375,6 +487,19 @@ def DDP_process(rank, world_size, args, verbose=True):
     
     setup(rank, world_size) # setup the process groups
     print('Workers assigned.')
+    
+    #@@@ reduce usage
+    # Access the memory capacity in bytes
+    memory_capacity_bytes = torch.cuda.get_device_properties(rank).total_memory
+    # Convert the memory capacity to a more readable format (e.g., GB)
+    memory_capacity_gb = memory_capacity_bytes / (1024**3)
+
+    if memory_capacity_gb<35:
+        print('memory_capacity_gb:',memory_capacity_gb)
+        os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'garbage_collection_threshold:0.7,max_split_size_mb:128' #@@@
+#         print('setting garbage_collection_threshold:0.7,max_split_size_mb:512')
+#         os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'garbage_collection_threshold:0.7,max_split_size_mb:512' #@@@
+    
     is_main_proc = is_main_process()
     print('is_main_proc', is_main_proc) #@@@@
     setup_for_distributed(is_main_proc) #removes printing for child processes.
@@ -400,7 +525,7 @@ def DDP_process(rank, world_size, args, verbose=True):
         # initialize the model using the checkpoint
         xmodel = init_model_from_checkpoint(xmodel, args.init_checkpoint_path)
         
-    seq_len = xmodel.config.num_frames #equivalent to num_frames in VideoMAE()
+    # seq_len = xmodel.config.num_frames #equivalent to num_frames in VideoMAE()
     num_patches_per_frame = (xmodel.config.image_size // xmodel.config.patch_size) ** 2
     model_seq_length = (xmodel.config.num_frames // xmodel.config.tubelet_size) * num_patches_per_frame
     mask_ratio = args.mask_ratio#float(args.mask_ratio)/100 #0.9 #@@@ switch to float if possible
@@ -423,8 +548,10 @@ def DDP_process(rank, world_size, args, verbose=True):
                                     momentum=momentum, nesterov=True)
     elif args.optim=='adamw':
         optimizer = torch.optim.AdamW(xmodel.parameters(), lr=lr, weight_decay=wd, betas=(0.9, 0.95))
-    else:
+    elif args.optim=='adam':
         optimizer = torch.optim.Adam(xmodel.parameters(), lr=lr, weight_decay=wd)
+    else:
+        raise ValueError('invalid argument for optim')
 
     sampler_shuffle = True #@@@@ True #for the distributed dampler
     # Set the other hyperparams: n_epoch, batch_size, num_workers
@@ -443,10 +570,10 @@ def DDP_process(rank, world_size, args, verbose=True):
     print('seed: ',seed)
     # Split the data
     
-    jpg_root=args.jpg_root #'/N/project/infant_image_statistics/preproc_saber/JPG_10fps/'
-    ds_rate = args.ds_rate #1
+    # jpg_root=args.jpg_root #'/N/project/infant_image_statistics/preproc_saber/JPG_10fps/'
+    # ds_rate = args.ds_rate #1
 
-    n_groupframes = 1450000 # minimum number of frames across age groups
+    # n_groupframes = 1450000 # minimum number of frames across age groups
     g0='008MS+009SS+010BF+011EA+012TT+013LS+014SN+015JM+016TF+017EW'
     g1='026AR+027SS+028CK+028MR+029TT+030FD+031HW+032SR+033SE+034JC'
     g2='043MP+044ET+046TE+047MS+048KG+049JC+050AB+050AK+051DW'
@@ -484,8 +611,10 @@ def DDP_process(rank, world_size, args, verbose=True):
     
     #     ds_rate = 1
     # n_samples = None#10 #50000
-    datasets = make_dataset(group, seq_len=seq_len, jpg_root=jpg_root, ds_rate=ds_rate, n_groupframes=n_groupframes, 
-                            fold=args.fold, image_size=image_size, condition=args.condition)
+#     datasets = make_dataset(group, seq_len=seq_len, jpg_root=jpg_root, ds_rate=ds_rate, n_groupframes=n_groupframes, 
+#                             fold=args.fold, image_size=image_size, condition=args.condition)
+    datasets = make_dataset(group, image_size, args)
+    
     print('datasets[train][0].shape:',datasets['train'][0].shape) #@@@ debugging
     # sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, 
                                      # shuffle=sampler_shuffle, seed=seed)
@@ -516,7 +645,27 @@ def DDP_process(rank, world_size, args, verbose=True):
         
     verbose = (verbose and is_main_process())
     
+    # Create the variables for storing the gradients
+    if args.monitor=='grad':
+        paramgr_indices = [1, 12, 183, 246]
+        paramgr_names = ['pgr'+str(item) 
+                         for item in paramgr_indices]
+        #corresponds to 
+#         1 videomae.embeddings.patch_embeddings.projection.weight
+#         12 videomae.encoder.layer.0.output.dense.weight
+#         183 encoder_to_decoder.weight
+#         246 decoder.head.weight
+        grad_mean_history = {'iter': []}
+        grad_mean_history.update({name: [] for name in paramgr_names})
+
+        grad_std_history = {'iter': []}
+        grad_std_history.update({name: [] for name in paramgr_names})
+        
+        grad_snr_history = {'iter': []}
+        grad_snr_history.update({name: [] for name in paramgr_names})
+
     
+    # loss_record_period = args.loss_record_period
     train_loss_history = []
     val_loss_history = []
     
@@ -538,10 +687,19 @@ def DDP_process(rank, world_size, args, verbose=True):
             running_loss = torch.tensor([0.0], device=rank)
             
             i_iter,print_interval =0,10
+            monitor_interval = 200
+            
+            dloader_len = len(dataloaders[phase])
+            if args.max_epoch_iters==0:
+                n_epoch_iters = dloader_len
+            else:
+                n_epoch_iters = min(args.max_epoch_iters, dloader_len)
+            print('n_epoch_iters: ',n_epoch_iters)
+            
 #             i_break, print_interval = 10,1 #@@@@@@@@@@@@@ debugging
             for inputs in tqdm(dataloaders[phase]):
 #                 print(inputs.shape)
-                optimizer.zero_grad()
+                
 
                 # Shuffle each array in the batch
                 bool_masked = np.zeros((batch_size, model_seq_length))
@@ -554,6 +712,20 @@ def DDP_process(rank, world_size, args, verbose=True):
                 inputs = inputs.to(rank)
                 # print("input device", inputs.get_device())
                 # bool_masked_pos = torch.randint(0, 2, (batch_size, model_seq_length)).bool()
+
+                
+                true_iter = i_ep*n_epoch_iters+i_iter
+                        
+                if (phase=='train') & (args.monitor=='grad') & (i_iter%monitor_interval==0):
+                    sample_grads = compute_sample_grads(xmodel, optimizer, inputs, bool_masked_pos,
+                                                        rank)
+                    print('len(sample_grads):',len(sample_grads))
+#                     Aggregate and append the statistics
+                    grad_mean_history, grad_std_history, grad_snr_history = append_gradient_statistics(
+                        true_iter, grad_mean_history, grad_std_history,grad_snr_history,
+                        paramgr_names, paramgr_indices, sample_grads, stat='median')
+                    
+                optimizer.zero_grad()
                 outputs = xmodel(inputs, bool_masked_pos=bool_masked_pos)
                 loss = outputs.loss
                 
@@ -562,9 +734,18 @@ def DDP_process(rank, world_size, args, verbose=True):
                 if phase == 'train':
                     loss.backward()
                     optimizer.step()
-                running_loss += loss.item() * inputs.size(0)
                 
+                running_loss += loss.item() #* inputs.size(0)
+                
+                
+#                 if (phase == 'train') & (i_iter%loss_record_period)==0:
+#                     period_loss = running_loss / loss_record_period
+#                     train_loss_history.append(period_loss.cpu().item())
+#                     running_loss[0] = 0.
+                    
                 i_iter+=1
+                if i_iter>=n_epoch_iters:
+                    break
 #                 if (i_iter==i_break) | (phase=='val'):
 #                     break #@@@
 
@@ -575,19 +756,21 @@ def DDP_process(rank, world_size, args, verbose=True):
 
                 
             if is_main_proc:
-                epoch_loss = running_loss / len(dataloaders[phase].dataset)
+                epoch_loss = running_loss / (n_epoch_iters*world_size)
                 if verbose:
                     print('{} Loss: {:.4f}'.format(phase, epoch_loss.item()))
                 if phase == 'val' and epoch_loss < best_loss:
                     best_loss = epoch_loss
-                        # best_model_wts = deepcopy(model.state_dict())
                 if phase == 'val':
                     val_loss_history.append(epoch_loss.cpu().item())
                 else:
-                    train_loss_history.append(epoch_loss.cpu().item())        
-            
-            
+                    train_loss_history.append(epoch_loss.cpu().item())
 
+
+            
+#     gc.collect() #@@@
+#     torch.cuda.empty_cache()
+    
     if verbose:
         print('Training complete')
         print('Best val loss: {:4f}'.format(best_loss.item()))
@@ -600,6 +783,7 @@ def DDP_process(rank, world_size, args, verbose=True):
         Path(model_dir).mkdir(parents=True, exist_ok=True)
         results_fpath = os.path.join(model_dir,f"train_val_scores_{train_group}_seed_{seed}_"+args.other_id)
         results_df.to_csv(results_fpath+'.csv', sep=',', float_format='%.4f')
+        print('results saved at ',results_fpath)
         # the model
         # STAGE = "g2"
         model_fname = '_'.join(['model', train_group, 'seed',str(seed), 'other', str(other_seed), args.other_id])+'.pt'
@@ -615,7 +799,34 @@ def DDP_process(rank, world_size, args, verbose=True):
                 }, MODELPATH)
 #         'optimizer_state_dict': optimizer.state_dict(),
         print('model saved at ',MODELPATH)
-
+        
+        # Store grads to disk
+        # Create subdirectory for the job
+        subdir_name = 'gradients/'#+f"gradients_{train_group}_seed_{seed}_"+args.other_id
+        grad_dir = os.path.join(model_dir, subdir_name)
+        Path(grad_dir).mkdir(parents=True, exist_ok=True)
+        
+        grad_mean_fpath = os.path.join(
+            grad_dir,
+            f"gradmean_{train_group}_seed_{seed}_"+args.other_id+'.json')
+        grad_std_fpath = os.path.join(
+            grad_dir,
+            f"gradstd_{train_group}_seed_{seed}_"+args.other_id+'.json')
+        
+        grad_snr_fpath = os.path.join(
+            grad_dir,
+            f"gradsnr_{train_group}_seed_{seed}_"+args.other_id+'.json')
+            
+        with open(grad_mean_fpath, "w") as json_file:
+            json.dump(grad_mean_history, json_file)
+        with open(grad_std_fpath, "w") as json_file:
+            json.dump(grad_std_history, json_file)
+        with open(grad_snr_fpath, "w") as json_file:
+            json.dump(grad_snr_history, json_file)
+        
+        print('gradients saved at ',grad_mean_fpath, grad_std_fpath, grad_snr_fpath)
+        
+        
     cleanup()
     
     
@@ -627,7 +838,7 @@ if __name__ == '__main__':
     # Add the arguments
     parser.add_argument('-train_group',
                            type=str,
-                           help='The age group on which the model gets trained. g0 or g1 or g2 or rand')
+                           help='The age group on which the model gets trained. g0 or g1 or g2 or gr')
 
     parser.add_argument('-jpg_root',
                            type=str,
@@ -657,16 +868,16 @@ if __name__ == '__main__':
     
     parser.add_argument('--optim',
                            type=str,
-                           default='adam',
+                           default='sgd',
                            help='')
     
     parser.add_argument('--lr',
                            type=float,
-                           default=1e-3,
+                           default=0.1,
                            help='')
     parser.add_argument('--wd',
                            type=float,
-                           default=5e-5,
+                           default=0,
                            help='')
     parser.add_argument('--momentum',
                            type=float,
@@ -676,7 +887,11 @@ if __name__ == '__main__':
                            type=int,
                            default=16,
                            help='')
-        
+    parser.add_argument('--num_frames',
+                           type=int,
+                           default=16,
+                           help='16 or 32')
+    
     parser.add_argument('--architecture',
                            type=str,
                            default='',
@@ -684,8 +899,13 @@ if __name__ == '__main__':
         
     parser.add_argument('--n_epoch',
                            type=int,
-                           default=2,
+                           default=1,
                            help='')
+    
+    parser.add_argument('--n_trainsamples',
+                           type=int,
+                           default=81000,
+                           help='how many train sample sequences to create (from the same number of frames). Controlled by the stride between the samples which can be shorter or longer than num_frames. 81000 would amount to stride=num_frames at 10fps with 1 data fold or 30fps and 3 data folds')
     
     parser.add_argument('--data_seed',
                            type=int,
@@ -697,7 +917,6 @@ if __name__ == '__main__':
                         default=0,
                            help='A seed used as both model ID and a random seed')
 
-    
     parser.add_argument('--condition',
                            type=str,
                            default='default',
@@ -707,7 +926,17 @@ if __name__ == '__main__':
                            type=str,
                            default='tube',
                            help='tube or random')
-
+    
+    parser.add_argument('--monitor',
+                           type=str,
+                           default='na',
+                           help='na or grad or weight')
+    
+    parser.add_argument('--max_epoch_iters',
+                           type=int,
+                           default=0,
+                           help='0 is for unlimited, i.e. as many iters as the dataloader has')
+# loss_record_period
     parser.add_argument('--other_id',
                            type=str,
                            default='',

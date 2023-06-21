@@ -195,13 +195,13 @@ def get_config(image_size, args, num_labels=2):
         num_hidden_layers = 6
         
         config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=16, tubelet_size=2, 
+                                             num_frames=args.num_frames, tubelet_size=2, 
                                              hidden_size=hidden_size, num_hidden_layers=num_hidden_layers, num_attention_heads=num_attention_heads,
                                              intermediate_size=intermediate_size, num_labels=num_labels)
     
     elif arch_kw=='base': #default
         config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=16, tubelet_size=2, 
+                                             num_frames=args.num_frames, tubelet_size=2, 
                                              hidden_size=768, num_hidden_layers=12, num_attention_heads=12,
                                              intermediate_size=3072, num_labels=num_labels)
     elif arch_kw=='small1':
@@ -211,7 +211,7 @@ def get_config(image_size, args, num_labels=2):
         num_hidden_layers = 12
         
         config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=16, tubelet_size=2, 
+                                             num_frames=args.num_frames, tubelet_size=2, 
                                              hidden_size=hidden_size, num_hidden_layers=num_hidden_layers, num_attention_heads=num_attention_heads,
                                              intermediate_size=intermediate_size, num_labels=num_labels)
         
@@ -357,7 +357,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
 #     '/N/project/baby_vision_curriculum/benchmarks/toybox/vids/toybox/'
     transform = transform_vid
     frame_rate=args.frame_rate
-    sample_len=args.sample_len
+    sample_len=args.num_frames
     dataset = ToyboxDataset(toybox_root, transform, 
                           frame_rate=frame_rate, sample_len=sample_len)
 #     feature_extract = True
@@ -475,7 +475,7 @@ if __name__ == '__main__':
                            default=3,
                            help='frame rate of the videos in the benchmark')
     
-    parser.add_argument('--sample_len',
+    parser.add_argument('--num_frames',
                            type=int,
                            default=16,
                            help='length of the input across the time dim')

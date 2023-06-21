@@ -5,13 +5,13 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=50
-#SBATCH --time=0-15:00:00
+#SBATCH --time=0-05:00:00
 #SBATCH --partition=gpu
 #SBATCH --gpus 4
 #SBATCH --mail-type=FAIL,BEGIN,END
-#SBATCH --job-name=job_012d_683
-#SBATCH --output=job_012d_683_Out
-#SBATCH --error=job_012d_683_Err
+#SBATCH --job-name=job_012r_581
+#SBATCH --output=job_012r_581_Out
+#SBATCH --error=job_012r_581_Err
 
 ######  Module commands #####
 module load python/gpu
@@ -22,19 +22,24 @@ ulimit -u 20000
 
 # Note for job submitters: For each run, modify the data_seed as well as the job-name and output and error file name (Line 16-18).
 
-data_seed=683 # Modify this for different runs: 681-683
+data_seed=581 # Modify this for different runs: 681-683
 
+# to avoid race condition with the other scripts.
+sleep_duration=$((180 * (data_seed % 3)))
+echo sleeping for $sleep_duration seconds
+sleep $sleep_duration
 
 # jpg_root='/N/project/infant_image_statistics/preproc_saber/JPG_10fps/'
 jpg_root='/N/project/infant_image_statistics/preproc_saber/JPG_30fps/'
 
 #@@@@@ debug. also fix the i_break in the code
 n_epoch=5
-condition='default'
-other_id=$condition
+mask_sampler='random'
+other_id=$mask_sampler
 
+condition='default'
 train_group='g0'
-ds_rate=3
+ds_rate=2
 mask_ratio=0.9
 #adamw: lr=1.5e-4, wd=0.05, momentum=0.9 (doesn't get used)
 #adam: lr=0.001. wd=1e-4, momentum=0.9 (doesn't get used)
@@ -46,9 +51,9 @@ batch_size=16
 architecture='base'
 momentum=0.9
 
-saveroot='/N/project/baby_vision_curriculum/trained_models/generative/v2/ablations/slowness/'
-tbsaveroot='/N/project/baby_vision_curriculum/trained_models/generative/v2/benchmarks/toybox/ablations/slowness/'
-ucsaveroot='/N/project/baby_vision_curriculum/trained_models/generative/v2/benchmarks/ucf101/ablations/slowness/'
+saveroot='/N/project/baby_vision_curriculum/trained_models/generative/v2/ablations/masksampler/'
+tbsaveroot='/N/project/baby_vision_curriculum/trained_models/generative/v2/benchmarks/toybox/ablations/masksampler/'
+ucsaveroot='/N/project/baby_vision_curriculum/trained_models/generative/v2/benchmarks/ucf101/ablations/masksampler/'
 
 
 savedir="${saveroot}s1/"
@@ -59,7 +64,7 @@ other_seed=$data_seed
 script='pretrain_videomae_2.2_control.py'
 
 
-python /N/project/baby_vision_curriculum/github/baby-vision-curriculum/generative/scripts/pretrain_videomae_v2.2_control.py -train_group $train_group -jpg_root $jpg_root -savedir $savedir --init_checkpoint_path $init_checkpoint_path --ds_rate $ds_rate --mask_ratio $mask_ratio --lr $lr --wd $wd --batch_size $batch_size --architecture $architecture --n_epoch $n_epoch --data_seed $data_seed --other_seed $other_seed  --script $script --other_id $other_id --optim $optim  --momentum $momentum --condition $condition
+python /N/project/baby_vision_curriculum/github/baby-vision-curriculum/generative/scripts/pretrain_videomae_v2.2_control.py -train_group $train_group -jpg_root $jpg_root -savedir $savedir --init_checkpoint_path $init_checkpoint_path --ds_rate $ds_rate --mask_ratio $mask_ratio --lr $lr --wd $wd --batch_size $batch_size --architecture $architecture --n_epoch $n_epoch --data_seed $data_seed --other_seed $other_seed  --script $script --other_id $other_id --optim $optim  --momentum $momentum --condition $condition --mask_sampler $mask_sampler
 
 model_fname="model_${train_group}_seed_${data_seed}_other_${other_seed}_${other_id}.pt"
 init_checkpoint_path="${savedir}${model_fname}"
@@ -110,7 +115,7 @@ train_group='g1'
 
 savedir="${saveroot}s2/"
 
-python /N/project/baby_vision_curriculum/github/baby-vision-curriculum/generative/scripts/pretrain_videomae_v2.2_control.py -train_group $train_group -jpg_root $jpg_root -savedir $savedir --init_checkpoint_path $init_checkpoint_path --ds_rate $ds_rate --mask_ratio $mask_ratio --lr $lr --wd $wd --batch_size $batch_size --architecture $architecture --n_epoch $n_epoch --data_seed $data_seed --other_seed $other_seed  --script $script --other_id $other_id --optim $optim  --momentum $momentum --condition $condition
+python /N/project/baby_vision_curriculum/github/baby-vision-curriculum/generative/scripts/pretrain_videomae_v2.2_control.py -train_group $train_group -jpg_root $jpg_root -savedir $savedir --init_checkpoint_path $init_checkpoint_path --ds_rate $ds_rate --mask_ratio $mask_ratio --lr $lr --wd $wd --batch_size $batch_size --architecture $architecture --n_epoch $n_epoch --data_seed $data_seed --other_seed $other_seed  --script $script --other_id $other_id --optim $optim  --momentum $momentum --condition $condition --mask_sampler $mask_sampler
 
 model_fname="model_${train_group}_seed_${data_seed}_other_${other_seed}_${other_id}.pt"
 init_checkpoint_path="${savedir}${model_fname}"
@@ -150,7 +155,7 @@ train_group='g2'
 
 savedir="${saveroot}s3/"
 
-python /N/project/baby_vision_curriculum/github/baby-vision-curriculum/generative/scripts/pretrain_videomae_v2.2_control.py -train_group $train_group -jpg_root $jpg_root -savedir $savedir --init_checkpoint_path $init_checkpoint_path --ds_rate $ds_rate --mask_ratio $mask_ratio --lr $lr --wd $wd --batch_size $batch_size --architecture $architecture --n_epoch $n_epoch --data_seed $data_seed --other_seed $other_seed  --script $script --other_id $other_id --optim $optim  --momentum $momentum --condition $condition
+python /N/project/baby_vision_curriculum/github/baby-vision-curriculum/generative/scripts/pretrain_videomae_v2.2_control.py -train_group $train_group -jpg_root $jpg_root -savedir $savedir --init_checkpoint_path $init_checkpoint_path --ds_rate $ds_rate --mask_ratio $mask_ratio --lr $lr --wd $wd --batch_size $batch_size --architecture $architecture --n_epoch $n_epoch --data_seed $data_seed --other_seed $other_seed  --script $script --other_id $other_id --optim $optim  --momentum $momentum --condition $condition --mask_sampler $mask_sampler
 
 
 model_fname="model_${train_group}_seed_${data_seed}_other_${other_seed}_${other_id}.pt"

@@ -5,16 +5,16 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=50
-#SBATCH --time=0-15:00:00
+#SBATCH --time=0-05:00:00
 #SBATCH --partition=gpu
 #SBATCH --gpus 4
 #SBATCH --mail-type=FAIL,BEGIN,END
-#SBATCH --job-name=job_012d_683
-#SBATCH --output=job_012d_683_Out
-#SBATCH --error=job_012d_683_Err
+#SBATCH --job-name=job_012ls_683
+#SBATCH --output=job_012ls_683_Out
+#SBATCH --error=job_012ls_683_Err
 
 ######  Module commands #####
-module load python/gpu
+module load deeplearning
 ulimit -u 20000
 
 ######  Job commands go below this line #####
@@ -25,12 +25,17 @@ ulimit -u 20000
 data_seed=683 # Modify this for different runs: 681-683
 
 
+# to avoid race condition with the other scripts.
+sleep_duration=$((180 * (data_seed % 3)))
+echo sleeping for $sleep_duration seconds
+sleep $sleep_duration
+
 # jpg_root='/N/project/infant_image_statistics/preproc_saber/JPG_10fps/'
 jpg_root='/N/project/infant_image_statistics/preproc_saber/JPG_30fps/'
 
 #@@@@@ debug. also fix the i_break in the code
 n_epoch=5
-condition='default'
+condition='longshuffle'
 other_id=$condition
 
 train_group='g0'

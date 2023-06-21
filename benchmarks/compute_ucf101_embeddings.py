@@ -151,7 +151,7 @@ class MyUCF101(UCF101):
 def make_ucf101dataset(args):
     ucf_root='/N/project/baby_vision_curriculum/benchmarks/mainstream/ucf101/UCF-101'
     annotation_path = '/N/project/baby_vision_curriculum/benchmarks/mainstream/ucf101/UCF101TrainTestSplits-RecognitionTask/ucfTrainTestlist/'
-    frames_per_clip = 16
+    frames_per_clip = args.num_frames #16
     step_between_clips = 300#1
     frame_rate=args.frame_rate#int(30/args.ds_rate)
     transform = transform_vid
@@ -205,13 +205,13 @@ def get_config(image_size, args, num_labels=2):
         num_hidden_layers = 6
         
         config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=16, tubelet_size=2, 
+                                             num_frames=args.num_frames, tubelet_size=2, 
                                              hidden_size=hidden_size, num_hidden_layers=num_hidden_layers, num_attention_heads=num_attention_heads,
                                              intermediate_size=intermediate_size, num_labels=num_labels)
     
     elif arch_kw=='base': #default
         config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=16, tubelet_size=2, 
+                                             num_frames=args.num_frames, tubelet_size=2, 
                                              hidden_size=768, num_hidden_layers=12, num_attention_heads=12,
                                              intermediate_size=3072, num_labels=num_labels)
     elif arch_kw=='small1':
@@ -221,7 +221,7 @@ def get_config(image_size, args, num_labels=2):
         num_hidden_layers = 12
         
         config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=16, tubelet_size=2, 
+                                             num_frames=args.num_frames, tubelet_size=2, 
                                              hidden_size=hidden_size, num_hidden_layers=num_hidden_layers, num_attention_heads=num_attention_heads,
                                              intermediate_size=intermediate_size, num_labels=num_labels)
         
@@ -529,6 +529,12 @@ if __name__ == '__main__':
                            type=int,
                            default=16,
                            help='')
+    
+    parser.add_argument('--num_frames',
+                           type=int,
+                           default=16,
+                           help='16 or 32')
+    
     parser.add_argument('--num_workers',
                            type=int,
                         default=6,
