@@ -33,8 +33,8 @@ from ddputils import is_main_process, save_on_master, setup_for_distributed
 
 # from time import time
 # from copy import deepcopy
-import cv2
-from itertools import chain
+# import cv2
+# from itertools import chain
 
 # ------------
 # Dataset and Dataloader
@@ -67,117 +67,60 @@ def transform_vid(video):
 
 
 
-class ToyboxDataset(torch.utils.data.Dataset):
-    def __init__(self, root_dir, transform, frame_rate=10, sample_len=16):
+class SSv2Dataset(torch.utils.data.Dataset):
+    def __init__(self, root_dir, transform, frame_rate=12, sample_len=16):
         self.root_dir = root_dir
         self.frame_rate = frame_rate
         self.sample_len = sample_len
         self.transform = transform
-        self.samples = []
-        for supercategory in os.listdir(self.root_dir):
-            for obj in os.listdir(os.path.join(self.root_dir, supercategory)):
-#                 for obj in os.listdir(os.path.join(self.root_dir, supercategory, category)):
-                object_dir = os.path.join(self.root_dir, supercategory, obj)
-                for view in os.listdir(object_dir):
-                    view_path = os.path.join(object_dir, view)
-                    self.samples.append(view_path)
-#                         self.samples.append((view_path, supercategory, category, object))
+        self.samples = sorted(os.listdir(root_dir),
+                             key=lambda x: int(x))
+        self.fps = 12 #original frame rate
+        self.ds_rate = round(self.fps/self.frame_rate)
 
     def __len__(self):
         return len(self.samples)
-
-    def get_all_frames(self, cap):
-        desired_frames = self.sample_len
-        frames = []
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-#                 print('end of the video, i_frame, len fames', frame_count, len(frames))
-                # End of video
-                break
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frames.append(frame)                
-            if len(frames) == desired_frames:
-                break
-        tmp_nframes = len(frames)
-        if tmp_nframes < desired_frames:
-            last_frame = frames[-1]
-            for i in range(desired_frames - tmp_nframes):
-                frames.append(last_frame)
-        
-        assert len(frames)==desired_frames
-        return frames
     
-    def wrap_frames(self, frames):
-        frames = torch.as_tensor(np.asarray(frames))
-        if len(frames.shape)!=4: #torch.Size([16, 12xx, 19xx, 3])
-            return None
-        return self.transform(frames)
-            
+    def _read_frames(self, sample_dir, framefn_list):
+        vid= [torchvision.io.read_image(
+            str(Path(self.root_dir, sample_dir, fn))).unsqueeze(0)
+                for fn in framefn_list]
+        return torch.concat(vid, axis=0)
+        
+    def get_frames(self, sample_dir):
+        framefn_list = sorted(os.listdir(self.root_dir+sample_dir),
+                              key=lambda x: int(x.split('.')[0]))
+        # try selecting with the suggested ds_rate, starting from the suggested point.
+        # if not enough, try starting from the beginning
+        # if still not enough, gradually reduce ds_rate.
+        # if not enough frames for ds_rate=1, repeat the last frame.
+        num_frames = len(framefn_list)
+        loc_idx = num_frames//4
+        slen = self.sample_len
+        step = self.ds_rate
+        if num_frames//step <slen:
+            last_item = framefn_list[-1]
+            while (len(framefn_list)//step)<slen:
+                framefn_list.append(last_item)
+            return self._read_frames(sample_dir, framefn_list[::step][:slen])
+        elif (num_frames-loc_idx)//step <slen:
+            return self._read_frames(sample_dir, framefn_list[::step][:slen])
+        else:
+            return self._read_frames(sample_dir, framefn_list[loc_idx:loc_idx+slen*step:step][:slen])
+
+
+        
     def __getitem__(self, index):
 #         print('---------------')
-        vid_path = self.samples[index]
-        vid_fname = Path(vid_path).name
-        frames = []
-        cap = cv2.VideoCapture(vid_path)
-        if cap is None or not cap.isOpened():
-            warnings.warn('unable to open video source: '+vid_path)
-            return None, None
-
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        ds_rate = round(fps/self.frame_rate)
-        num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-#         print('num_frames:',num_frames)
-#         print('ds_rate:',ds_rate)
-#         print('num_frames:',num_frames)
+        vid_fname = self.samples[index]
+        frames = self.get_frames(vid_fname)
+#         if self.transform is not None:
+#             frames = [self.transform(fr)
+#                       for fr in frames]
+        if self.transform is not None:
+            frames = self.transform(frames)
+        return frames, vid_fname
         
-        sample_scope = self.sample_len*ds_rate
-        if num_frames<sample_scope:
-#             print('Not enough frames in the video',vid_path)
-            frames = self.get_all_frames(cap)
-                        #apply transform
-            frames_transformed = self.wrap_frames(frames)
-            if frames_transformed is None:
-                print(vid_path, 'gave None')
-                return None, None
-            return frames_transformed, vid_fname
-            
-        
-        # duration = num_frames / fps
-        start_frame = int(num_frames * 1 / 5)  # Starting frame at 2/3 of video duration
-        if (num_frames-start_frame)<sample_scope:
-            start_frame = num_frames-sample_scope
-        
-#         print('start_frame',start_frame)
-#         end_frame = start_frame+sample_scope#int(start_frame + fps * 1.6)  # Ending frame after 1.6 seconds
-        desired_frames = self.sample_len
-        frame_count = 0
-        cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
-        frames = []
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-#                 print('end of the video, i_frame, len fames', frame_count, len(frames))
-                # End of video
-                break
-            
-            if frame_count % ds_rate==0:
-#                 if (frame_count > start_frame) & \
-#                 (frame_count < end_frame):
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                frames.append(frame)                
-            if len(frames) == desired_frames:
-                break
-            frame_count += 1
-            
-        cap.release()
-        frames_transformed = self.wrap_frames(frames)
-        
-        if frames_transformed is None:
-            print(vid_path, 'gave None')
-            return None, None
-        else:
-            return frames_transformed, vid_fname
             
 def my_collate(batch):
     batch = tuple(filter(lambda x: x[0] is not None, batch))
@@ -313,9 +256,7 @@ def save_results(fnames, embeddings, args):
     savedir = args.savedir
     Path(savedir).mkdir(parents=True, exist_ok=True)
 #         <model vs scores>_<prot>_seed_<seed>_other_<other>_<other id>
-    result_fname = '_'.join(['embeddings', args.prot_name, 
-                            'seed', str(args.seed),  
-                            args.other_id])+'.csv'
+    result_fname = '_'.join(['embeddings', args.run_id])+'.csv'
     results_fpath = os.path.join(savedir, result_fname)
     xdf.to_csv(results_fpath, sep=',', float_format='%.6f', index=False)
     print('embeddings saved at ',results_fpath)
@@ -355,12 +296,12 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     number_of_cpu = len(os.sched_getaffinity(0))#multiprocessing.cpu_count() #joblib.cpu_count()
     
     #Instantiate the dataset, criterion
-    toybox_root = args.vid_root
+    ssv2_root = args.vid_root
 #     '/N/project/baby_vision_curriculum/benchmarks/toybox/vids/toybox/'
     transform = transform_vid
     frame_rate=args.frame_rate
     sample_len=args.num_frames
-    dataset = ToyboxDataset(toybox_root, transform, 
+    dataset = SSv2Dataset(ssv2_root, transform, 
                           frame_rate=frame_rate, sample_len=sample_len)
 #     feature_extract = True
 #     model_type = 'res50'
@@ -461,7 +402,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-vid_root',
                            type=str,
-                           help='absolute path to the toybox dataset')
+                           help='absolute path to the ssv2 dataset')
     
     parser.add_argument('-init_checkpoint_path',
                            type=str,
@@ -474,7 +415,7 @@ if __name__ == '__main__':
     
     parser.add_argument('--frame_rate',
                            type=int,
-                           default=3,
+                           default=6,
                            help='frame rate of the videos in the benchmark')
     
     parser.add_argument('--num_frames',
@@ -498,22 +439,16 @@ if __name__ == '__main__':
                            type=str,
                            default='',
                            help='see get_config')    
-        
-    parser.add_argument('--prot_name',
-                           type=str,
-                        default='x',
-                           help='protocol name. used only for naming the output files')
-
+    
     parser.add_argument('--seed',
                            type=int,
                         default=0,
                            help='A seed used as both model ID and a random seed')
     
-    parser.add_argument('--other_id',
+    parser.add_argument('--run_id',
                            type=str,
-                           default='x',
-                           help='An identifier for the checkpoint')
-    
+                        default='x',
+                           help='protocol name. used only for naming the output files')
     #----------
 
 
@@ -526,8 +461,11 @@ if __name__ == '__main__':
     n_gpu = torch.cuda.device_count()
     world_size= n_gpu
 
-    mp.spawn(
-            DDP_process,
-            args=(world_size, args),#prot_arg, seed_arg),
-            nprocs=world_size
-        )
+    try:
+        mp.spawn(
+                DDP_process,
+                args=(world_size, args),#prot_arg, seed_arg),
+                nprocs=world_size
+            )
+    except:
+        cleanup()

@@ -198,22 +198,23 @@ def make_dataset(args):
 
 def get_config(image_size, args, num_labels=2):
     arch_kw = args.architecture
-    if arch_kw=='small2':
+    
+    if arch_kw=='base': #default
+        config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
+                                             num_frames=args.num_frames, tubelet_size=args.tubelet_size, 
+                                             hidden_size=768, num_hidden_layers=12, num_attention_heads=12,
+                                             intermediate_size=3072, num_labels=num_labels)
+    elif arch_kw=='small2':
         hidden_size = 768
         intermediate_size = 4*768
         num_attention_heads = 6
         num_hidden_layers = 6
         
         config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=args.num_frames, tubelet_size=2, 
-                                             hidden_size=hidden_size, num_hidden_layers=num_hidden_layers, num_attention_heads=num_attention_heads,
+                                             num_frames=args.num_frames, tubelet_size=args.tubelet_size, 
+                                             hidden_size=hidden_size, num_hidden_layers=num_hidden_layers, 
+                                             num_attention_heads=num_attention_heads,
                                              intermediate_size=intermediate_size, num_labels=num_labels)
-    
-    elif arch_kw=='base': #default
-        config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=args.num_frames, tubelet_size=2, 
-                                             hidden_size=768, num_hidden_layers=12, num_attention_heads=12,
-                                             intermediate_size=3072, num_labels=num_labels)
     elif arch_kw=='small1':
         hidden_size = 384
         intermediate_size = 4*384
@@ -221,7 +222,7 @@ def get_config(image_size, args, num_labels=2):
         num_hidden_layers = 12
         
         config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=args.num_frames, tubelet_size=2, 
+                                             num_frames=args.num_frames, tubelet_size=args.tubelet_size, 
                                              hidden_size=hidden_size, num_hidden_layers=num_hidden_layers, num_attention_heads=num_attention_heads,
                                              intermediate_size=intermediate_size, num_labels=num_labels)
         
@@ -534,7 +535,10 @@ if __name__ == '__main__':
                            type=int,
                            default=16,
                            help='16 or 32')
-    
+    parser.add_argument('--tubelet_size',
+                           type=int,
+                           default=2,
+                           help='temporal size of each patch')
     parser.add_argument('--num_workers',
                            type=int,
                         default=6,

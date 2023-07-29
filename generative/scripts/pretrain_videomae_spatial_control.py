@@ -1,8 +1,5 @@
-# added in v2.5:
-# terminate the epoch after max_epochiters=2000 is reached
-# for the control condition static, changed the val dataset to a normal one (as opposed to static dataset)
-# args.tubelet_size
-# n_valsamples = min(n_maxvalsamples, 10000)
+# built on top of v2.5
+# change the make_dataset to use the saved sample filenmaes.
 
 import sys, os
 
@@ -43,7 +40,8 @@ import random
 from copy import deepcopy
 import json
 import itertools
-import gc
+# import gc
+import pickle
 
 # device_index = 0  # Use 0 for the first GPU, 1 for the second, and so on
 # Get the GPU properties
@@ -140,18 +138,18 @@ def append_gradient_statistics(
     
     return grad_mean_history, grad_std_history, grad_snr_history
                 
-def get_fpathlist(vid_root, subjdir, ds_rate=1):
-    """
-    # read the image files inside vid_root/subj_dir into a list. 
-    # makes sure they're all jpg. also sorts them so that the order of the frames is correct.
-    # subjdir = ['008MS']
-    """
+# def get_fpathlist(vid_root, subjdir, ds_rate=1):
+#     """
+#     # read the image files inside vid_root/subj_dir into a list. 
+#     # makes sure they're all jpg. also sorts them so that the order of the frames is correct.
+#     # subjdir = ['008MS']
+#     """
     
-    fpathlist = sorted(list(Path(os.path.join(vid_root, subjdir)).iterdir()), 
-                       key=lambda x: x.name)
-    fpathlist = [str(fpath) for fpath in fpathlist if fpath.suffix=='.jpg']
-    fpathlist = fpathlist[::ds_rate]
-    return fpathlist
+#     fpathlist = sorted(list(Path(os.path.join(vid_root, subjdir)).iterdir()), 
+#                        key=lambda x: x.name)
+#     fpathlist = [str(fpath) for fpath in fpathlist if fpath.suffix=='.jpg']
+#     fpathlist = fpathlist[::ds_rate]
+#     return fpathlist
 
 class TubeMaskingGenerator:
     def __init__(self, input_size, mask_ratio):
@@ -258,28 +256,28 @@ def get_train_val_split(fpathlist, val_ratio=0.1):
     val_set = fpathlist[split1_idx:split2_idx]
     return train_set, val_set
 
-def get_fpathseqlist(fpathlist, seq_len, ds_rate=1, n_samples=None):
-    """
-    Returns a list of list that can be passed to ImageSequenceDataset
-    # n_samples: int
-    # between 1 and len(fpathlist)
-    # If None, it's set to len(fpathlist)/seq_len
-    """
+# def get_fpathseqlist(fpathlist, seq_len, ds_rate=1, n_samples=None):
+#     """
+#     Returns a list of list that can be passed to ImageSequenceDataset
+#     # n_samples: int
+#     # between 1 and len(fpathlist)
+#     # If None, it's set to len(fpathlist)/seq_len
+#     """
     
-    sample_len = seq_len*ds_rate
-    if n_samples is None:
-        n_samples = int(len(fpathlist)/seq_len)
-        sample_stride = sample_len
-    else:
-        assert type(n_samples)==int
-        assert len(fpathlist)>n_samples
-        sample_stride = int(len(fpathlist)/n_samples)
-        # for adult group, sample_stride ~=10. i.e. each frame contributes to more than 1 sample sequence, 
-        # but doesn't appear in the same index of the sequence.
+#     sample_len = seq_len*ds_rate
+#     if n_samples is None:
+#         n_samples = int(len(fpathlist)/seq_len)
+#         sample_stride = sample_len
+#     else:
+#         assert type(n_samples)==int
+#         assert len(fpathlist)>n_samples
+#         sample_stride = int(len(fpathlist)/n_samples)
+#         # for adult group, sample_stride ~=10. i.e. each frame contributes to more than 1 sample sequence, 
+#         # but doesn't appear in the same index of the sequence.
 
-    fpathseqlist = [fpathlist[i:i+sample_len:ds_rate] 
-                    for i in range(0, n_samples*sample_stride, sample_stride)]
-    return fpathseqlist
+#     fpathseqlist = [fpathlist[i:i+sample_len:ds_rate] 
+#                     for i in range(0, n_samples*sample_stride, sample_stride)]
+#     return fpathseqlist
 
 
 def _get_transform(image_size):
@@ -316,10 +314,39 @@ def get_fold(gx_fpathlist, fold, max_folds, args):
     fold_segments = list(itertools.chain.from_iterable(fold_segments))
     return fold_segments
 
+def prepend_jpgroot(gx_relpathseqlist, jpg_root):
+    for i in range(len(gx_relpathseqlist)):
+        gx_relpathseqlist[i] = [jpg_root + element 
+                                for element in gx_relpathseqlist[i]]
+    return gx_relpathseqlist
+
+# def adapt_numframes(gx_pathseqlist, num_frames):
+#     for i in range(len(gx_pathseqlist)):
+#         if num_frames==1:
+#             gx_pathseqlist[i] = [gx_pathseqlist[i][0]]
+#         else:
+#             gx_pathseqlist[i] = gx_pathseqlist[i][:num_frames]
+#     return gx_pathseqlist
+    
+    
 def make_dataset(subj_dirs, image_size, args):
-    seq_len = args.num_frames #kwargs['seq_len']
+    
+    train_group = args.train_group
+    if args.num_frames==16:
+        control_data_root = '/N/project/baby_vision_curriculum/tmp_data/simple_sequences/seqlen16_fps30/'
+    elif args.num_frames==1:
+        control_data_root = '/N/project/baby_vision_curriculum/tmp_data/simple_sequences/seqlen1_fps30/'
+    else:
+        raise ValueError
+        
+    gx_pkl_fp = control_data_root+train_group+'_samples.pkl'
+    
+    with open(gx_pkl_fp, 'rb') as file:
+        gx_pathseqlist = pickle.load(file)
+    
+    # seq_len = args.num_frames #kwargs['seq_len']
 #     n_groupframes=kwargs['n_groupframes']#1450000
-    ds_rate = args.ds_rate #kwargs['ds_rate']
+#     ds_rate = args.ds_rate #kwargs['ds_rate']
     jpg_root = args.jpg_root #kwargs['jpg_root']
 #     image_size = kwargs['image_size']
     fold = args.fold #kwargs['fold']
@@ -327,14 +354,16 @@ def make_dataset(subj_dirs, image_size, args):
     n_trainsamples = args.n_trainsamples
     
     transform = _get_transform(image_size)
-    gx_fpathlist = []
-    for i_subj, subjdir in enumerate(tqdm(subj_dirs)):
-        gx_fpathlist += get_fpathlist(jpg_root, subjdir, ds_rate=ds_rate)
+#     gx_fpathlist = []
+#     for i_subj, subjdir in enumerate(tqdm(subj_dirs)):
+#         gx_fpathlist += get_fpathlist(jpg_root, subjdir, ds_rate=ds_rate)
     
-    # added on May15
     max_folds = 3
-    gx_fpathlist = get_fold(gx_fpathlist, fold, max_folds, args)
-    print('Num. frames in the fold:',len(gx_fpathlist))
+    gx_pathseqlist = get_fold(gx_pathseqlist, fold, max_folds, args)
+    gx_pathseqlist = prepend_jpgroot(gx_pathseqlist, jpg_root)
+#     if args.num_frames<16:
+#         gx_pathseqlist = adapt_numframes(gx_pathseqlist, args.num_frames) #created for accommodating num_frames=1
+    print('Num. samples in the fold:',len(gx_pathseqlist))
 
     #     if len(gx_fpathlist)>=n_groupframes:
 #         gx_fpathlist = gx_fpathlist[:n_groupframes]
@@ -345,25 +374,27 @@ def make_dataset(subj_dirs, image_size, args):
 #     else:
     
     # Train-val split
-    gx_train_fp, gx_val_fp = get_train_val_split(gx_fpathlist, val_ratio=0.1)
+    gx_train_fp, gx_val_fp = get_train_val_split(gx_pathseqlist, val_ratio=0.1)
 
     if condition=='longshuffle':
-        random.shuffle(gx_train_fp)
+        raise NotImplementedError
+#         random.shuffle(gx_train_fp)
     
     n_trainsamples = n_trainsamples #int(0.9*n_groupframes/seq_len) #81k
     
-    n_maxvalsamples = int(len(gx_val_fp)/seq_len)
+    n_maxvalsamples = int(len(gx_val_fp)/1)#seq_len)
     n_valsamples = min(n_maxvalsamples, 10000)  #means don't do bootstraping for val. Use whatever number 0.1*len(gx_fpathlist) gives.
     
-    gx_train_fpathseqlist = get_fpathseqlist(gx_train_fp, seq_len, ds_rate=1, n_samples=n_trainsamples)
-    gx_val_fpathseqlist = get_fpathseqlist(gx_val_fp, seq_len, ds_rate=1, n_samples=n_valsamples)
+    gx_train_fpathseqlist = random.sample(gx_train_fp, n_trainsamples)
+    gx_val_fpathseqlist = random.sample(gx_val_fp, n_valsamples)
     
     
     if condition=='shuffle':
-        train_dataset = ImageSequenceDataset(gx_train_fpathseqlist, transform=transform, shuffle=True)
-        val_dataset = ImageSequenceDataset(gx_val_fpathseqlist, transform=transform, shuffle=False)
+        raise NotImplementedError
+#         train_dataset = ImageSequenceDataset(gx_train_fpathseqlist, transform=transform, shuffle=True)
+#         val_dataset = ImageSequenceDataset(gx_val_fpathseqlist, transform=transform, shuffle=False)
     
-    elif condition=='static':
+    elif condition=='static': #@@@ assumes num_frames=16
         train_dataset = StillVideoDataset(gx_train_fpathseqlist, transform=transform)
         val_dataset = ImageSequenceDataset(gx_val_fpathseqlist, transform=transform, shuffle=False)
 #         StillVideoDataset(gx_val_fpathseqlist, transform=transform)

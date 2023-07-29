@@ -19,7 +19,7 @@ import argparse
 import pandas as pd
 import warnings
 
-import transformers
+# import transformers
 
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
@@ -34,7 +34,15 @@ from ddputils import is_main_process, save_on_master, setup_for_distributed
 # from time import time
 # from copy import deepcopy
 import cv2
-from itertools import chain
+# from itertools import chain
+
+# script_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scripts')
+
+# print(script_dir)
+# sys.path.insert(0, script_dir)
+import vision_transformer as vit
+from helper import load_checkpoint
+from tensors import trunc_normal_
 
 # ------------
 # Dataset and Dataloader
@@ -186,75 +194,50 @@ def my_collate(batch):
 
 #------------------------------------
 # Get Model
-def get_config(image_size, args, num_labels=2):
-    arch_kw = args.architecture
+
+def init_weights(m):
+    if isinstance(m, torch.nn.Linear):
+        trunc_normal_(m.weight, std=0.02)
+        if m.bias is not None:
+            torch.nn.init.constant_(m.bias, 0)
+    elif isinstance(m, torch.nn.LayerNorm):
+        torch.nn.init.constant_(m.bias, 0)
+        torch.nn.init.constant_(m.weight, 1.0)
+            
+def get_untrained_model(
+    patch_size=16,
+    tubelet_size=1,
+    num_frames=1,
+    model_name='vit_base',
+    image_size=224,
+    pred_depth=6,
+    pred_emb_dim=384
+):
+#     encoder = vit_base(
+    encoder = vit.__dict__[model_name](
+        img_size=[image_size],
+        patch_size=patch_size,
+        num_frames=num_frames,
+        tubelet_size=tubelet_size)
     
-    if arch_kw=='base': #default
-        config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=args.num_frames, tubelet_size=args.tubelet_size, 
-                                             hidden_size=768, num_hidden_layers=12, num_attention_heads=12,
-                                             intermediate_size=3072, num_labels=num_labels)
-    elif arch_kw=='small2':
-        hidden_size = 768
-        intermediate_size = 4*768
-        num_attention_heads = 6
-        num_hidden_layers = 6
-        
-        config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=args.num_frames, tubelet_size=args.tubelet_size, 
-                                             hidden_size=hidden_size, num_hidden_layers=num_hidden_layers, 
-                                             num_attention_heads=num_attention_heads,
-                                             intermediate_size=intermediate_size, num_labels=num_labels)
+    for m in encoder.modules():
+        init_weights(m)
+
+#     encoder.to(device)
+    # logger.info(encoder)
+    return encoder
+
+def get_model(args):
     
-    elif arch_kw=='small1':
-        hidden_size = 384
-        intermediate_size = 4*384
-        num_attention_heads = 6
-        num_hidden_layers = 12
-        
-        config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=args.num_frames, tubelet_size=2, 
-                                             hidden_size=hidden_size, num_hidden_layers=num_hidden_layers, num_attention_heads=num_attention_heads,
-                                             intermediate_size=intermediate_size, num_labels=num_labels)
-        
-    elif arch_kw=='small3':
-        hidden_size = 384
-        intermediate_size = 4*384
-        num_attention_heads = 6
-        num_hidden_layers = 6
-        
-        config = transformers.VideoMAEConfig(image_size=image_size, patch_size=16, num_channels=3,
-                                             num_frames=16, tubelet_size=2, 
-                                             hidden_size=hidden_size, num_hidden_layers=num_hidden_layers, num_attention_heads=num_attention_heads,
-                                             intermediate_size=intermediate_size)
-        
-    else:
-        raise ValueError
-    return config
-
-
-def init_model_from_checkpoint(model, checkpoint_path):
-    # caution: model class
-    checkpoint = torch.load(checkpoint_path)
-    model.load_state_dict(checkpoint['model_state_dict'])
-    return model
-
-def adapt_videomae(source_model, target_model):
-    # load the embeddings
-    target_model.videomae.embeddings.load_state_dict(
-        source_model.videomae.embeddings.state_dict())
-#     load the encoder
-    target_model.videomae.encoder.load_state_dict(
-        source_model.videomae.encoder.state_dict())
-    return target_model
-# def adapt_videomae(source_model, target_model):
-#     # load the embeddings
-#     target_model.embeddings.load_state_dict(
-#         source_model.videomae.embeddings.state_dict())
-# #     load the encoder
-#     target_model.encoder.load_state_dict(
-#         source_model.videomae.encoder.state_dict())
-#     return target_model
+    encoder = get_untrained_model(num_frames=args.num_frames, tubelet_size=args.tubelet_size)
+    
+    load_path = args.init_checkpoint_path
+    if load_path!='na':
+        print('load_path:',load_path)
+        encoder, _, _, _, scaler, _ = load_checkpoint(r_path=load_path,
+            encoder=encoder, predictor=None, target_encoder=None, opt=None, scaler=None)
+    
+    return encoder
 
 def set_parameter_requires_grad(model, feature_extracting):
     if feature_extracting:
@@ -262,31 +245,7 @@ def set_parameter_requires_grad(model, feature_extracting):
             param.requires_grad = False
 #         for param in model.classifier.parameters():
 #             param.requires_grad = True
-            
-def get_model(image_size, num_labels, feature_extracting, args):
-    config_source = get_config(image_size, args)
-    model_source = transformers.VideoMAEForPreTraining(config_source)
-    
-    if args.init_checkpoint_path!='na':
-        print('args.init_checkpoint_path:',args.init_checkpoint_path)
-        # initialize the model using the checkpoint
-        model_source = init_model_from_checkpoint(model_source, args.init_checkpoint_path)
-  
-    config_target = get_config(image_size, args, num_labels=num_labels)
-    model_target = transformers.VideoMAEForVideoClassification(config=config_target)
-#     model_target = transformers.VideoMAEModel(config=config_target) #@@@ do not add the classifer head
-    model_target = adapt_videomae(model_source, model_target)
-#     if not torch.all(
-#         model_target.embeddings.patch_embeddings.projection.weight==model_source.videomae.embeddings.patch_embeddings.projection.weight):
-#         warnings.warn('Model not successfully initialized')
-    if not torch.all(
-        model_target.videomae.embeddings.patch_embeddings.projection.weight==model_source.videomae.embeddings.patch_embeddings.projection.weight):
-        warnings.warn('Model not successfully initialized')
-    
-#     if feature_extracting: #@@@@@ redundant with torch.no_grad
-#         set_parameter_requires_grad(model_target, feature_extracting)
-    
-    return model_target
+
 
 #------------------------------------
 
@@ -313,9 +272,7 @@ def save_results(fnames, embeddings, args):
     savedir = args.savedir
     Path(savedir).mkdir(parents=True, exist_ok=True)
 #         <model vs scores>_<prot>_seed_<seed>_other_<other>_<other id>
-    result_fname = '_'.join(['embeddings', args.prot_name, 
-                            'seed', str(args.seed),  
-                            args.other_id])+'.csv'
+    result_fname = '_'.join(['embeddings', args.run_id])+'.csv'
     results_fpath = os.path.join(savedir, result_fname)
     xdf.to_csv(results_fpath, sep=',', float_format='%.6f', index=False)
     print('embeddings saved at ',results_fpath)
@@ -371,11 +328,11 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     
     # Instantiate the model, optimizer
     #Load the model, adapt it to the downstream task
-    image_size = 224
+#     image_size = 224
 #     feature_extract = (args.finetune=='n')
-    num_classes=0
-    feature_extract=True
-    xmodel = get_model(image_size, num_classes, feature_extract, args)
+#     num_classes=0
+#     feature_extract=True
+    xmodel = get_model(args)
     
     xmodel = xmodel.to(rank)
     xmodel = DDP(xmodel, device_ids=[rank], output_device=rank, 
@@ -420,7 +377,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
 #             print('len(fnames):',len(fnames)) #@@@@@debug
 #             print('inputs.shape:',inputs.shape)
             inputs = inputs.to(rank)
-            image_features = xmodel(pixel_values=inputs).logits
+            image_features = xmodel(inputs).mean(1)
 #             image_features /= image_features.norm(dim=-1, keepdim=True)
             data['fnames'] += fnames
             data['embeddings'].append(image_features.detach().cpu().numpy())
@@ -499,20 +456,14 @@ if __name__ == '__main__':
                            default='',
                            help='see get_config')    
         
-    parser.add_argument('--prot_name',
+    parser.add_argument('--run_id',
                            type=str,
                         default='x',
                            help='protocol name. used only for naming the output files')
-
     parser.add_argument('--seed',
-                           type=int,
-                        default=0,
-                           help='A seed used as both model ID and a random seed')
-    
-    parser.add_argument('--other_id',
                            type=str,
-                           default='x',
-                           help='An identifier for the checkpoint')
+                        default=0,
+                           help='')
     
     #----------
 
