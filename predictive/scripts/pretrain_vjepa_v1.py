@@ -375,7 +375,7 @@ def DDP_process(rank, world_size, args, verbose=True):
     # -- momentum schedule
     ema = (0.996, 1.0)
     momentum_scheduler = (ema[0] + i*(ema[1]-ema[0])/(ipe*num_epochs*ipe_scale)
-                          for i in range(int(ipe*num_epochs*ipe_scale)+1))
+                          for i in range(int(ipe*num_epochs*ipe_scale)+5))
 
 
     sampler_shuffle = True #@@@@ True #for the distributed dampler
@@ -528,7 +528,10 @@ def DDP_process(rank, world_size, args, verbose=True):
 
                 # Step 3. momentum update of target encoder
                 with torch.no_grad():
-                    m = next(momentum_scheduler)
+                    try:
+                        m = next(momentum_scheduler)
+                    except:
+                        m=0.998
                     for param_q, param_k in zip(encoder.parameters(), target_encoder.parameters()):
                         param_k.data.mul_(m).add_((1.-m) * param_q.detach().data)
                 return (float(loss), grad_stats)
@@ -681,7 +684,7 @@ if __name__ == '__main__':
     parser.add_argument('--augs',
                            type=str,
                            default='n',
-                           help='c: RandomResizedCrop, b:GaussianBlur, j:ColorJitter')  
+                           help='c: RandomResizedCrop, b:GaussianBlur, j:ColorJitter, g: RandomGrayscale')  
     parser.add_argument('--architecture',
                            type=str,
                            default='',

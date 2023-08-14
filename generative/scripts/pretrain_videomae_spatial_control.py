@@ -319,15 +319,6 @@ def prepend_jpgroot(gx_relpathseqlist, jpg_root):
         gx_relpathseqlist[i] = [jpg_root + element 
                                 for element in gx_relpathseqlist[i]]
     return gx_relpathseqlist
-
-# def adapt_numframes(gx_pathseqlist, num_frames):
-#     for i in range(len(gx_pathseqlist)):
-#         if num_frames==1:
-#             gx_pathseqlist[i] = [gx_pathseqlist[i][0]]
-#         else:
-#             gx_pathseqlist[i] = gx_pathseqlist[i][:num_frames]
-#     return gx_pathseqlist
-    
     
 def make_dataset(subj_dirs, image_size, args):
     
@@ -344,9 +335,6 @@ def make_dataset(subj_dirs, image_size, args):
     with open(gx_pkl_fp, 'rb') as file:
         gx_pathseqlist = pickle.load(file)
     
-    # seq_len = args.num_frames #kwargs['seq_len']
-#     n_groupframes=kwargs['n_groupframes']#1450000
-#     ds_rate = args.ds_rate #kwargs['ds_rate']
     jpg_root = args.jpg_root #kwargs['jpg_root']
 #     image_size = kwargs['image_size']
     fold = args.fold #kwargs['fold']

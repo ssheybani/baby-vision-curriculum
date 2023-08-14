@@ -171,6 +171,8 @@ def _get_transform(image_size, augs='n',crop_size=0, crop_scale=1):
         transform_list += [get_color_distortion(s=color_jitter)]
     if 'b' in augs:
         transform_list += [GaussianBlur(p=0.5)]
+    if 'g' in augs:
+        transform_list += [tr.RandomGrayscale(p=0.5)]
     
     transform_list += [tr.ToTensor()]
     transform_list += [tr.Normalize(mean,std)]

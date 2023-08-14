@@ -499,20 +499,16 @@ if __name__ == '__main__':
                            default='',
                            help='see get_config')    
         
-    parser.add_argument('--prot_name',
-                           type=str,
-                        default='x',
-                           help='protocol name. used only for naming the output files')
-
     parser.add_argument('--seed',
                            type=int,
                         default=0,
                            help='A seed used as both model ID and a random seed')
     
-    parser.add_argument('--other_id',
+    parser.add_argument('--run_id',
                            type=str,
-                           default='x',
-                           help='An identifier for the checkpoint')
+                        default='x',
+                           help='protocol name. used only for naming the output files')
+    #----------
     
     #----------
 
