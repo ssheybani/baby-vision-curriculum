@@ -1,6 +1,6 @@
 import json
 import csv
-from sklearn.preprocessing import LabelEncoder
+# from sklearn.preprocessing import LabelEncoder
 
 # Replace 'path_to_json_file.json' with the actual path to your JSON file
 input_json_file = '/N/project/baby_vision_curriculum/benchmarks/ssv2/easy_labels/train_ann_b-10classes.json'

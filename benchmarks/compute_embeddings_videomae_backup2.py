@@ -83,14 +83,14 @@ def set_parameter_requires_grad(model, feature_extracting):
 #         for param in model.classifier.parameters():
 #             param.requires_grad = True
             
-def get_model(image_size, num_labels, feature_extracting, init_checkpoint_path, args):
+def get_model(image_size, num_labels, feature_extracting, args):
     config_source = get_config(image_size, args)
     model_source = transformers.VideoMAEForPreTraining(config_source)
     
-    if init_checkpoint_path!='na':
-        print('init_checkpoint_path:',init_checkpoint_path)
+    if args.init_checkpoint_path!='na':
+        print('args.init_checkpoint_path:',args.init_checkpoint_path)
         # initialize the model using the checkpoint
-        model_source = init_model_from_checkpoint(model_source, init_checkpoint_path)
+        model_source = init_model_from_checkpoint(model_source, args.init_checkpoint_path)
   
     config_target = get_config(image_size, args, num_labels=num_labels)
     model_target = transformers.VideoMAEForVideoClassification(config=config_target)
@@ -111,7 +111,7 @@ def get_model(image_size, num_labels, feature_extracting, init_checkpoint_path, 
 #------------------------------------
 
 
-def save_results(fnames, embeddings, phase, run_id, args):
+def save_results(fnames, embeddings, phase, args):
     print('embeddings.shape:',embeddings.shape)
     print('len(fnames):',len(fnames))
 #     print('type(fnames):',type(fnames))
@@ -135,15 +135,10 @@ def save_results(fnames, embeddings, phase, run_id, args):
         savedir = os.path.join(savedir,'test/')
     Path(savedir).mkdir(parents=True, exist_ok=True)
 #         <model vs scores>_<prot>_seed_<seed>_other_<other>_<other id>
-    result_fname = '_'.join(['embeddings', run_id])+'.csv'
+    result_fname = '_'.join(['embeddings', args.run_id])+'.csv'
     results_fpath = os.path.join(savedir, result_fname)
     xdf.to_csv(results_fpath, sep=',', float_format='%.6f', index=False)
     print('embeddings saved at ',results_fpath)
-    
-
-def get_run_id(fp):
-    fname = Path(fp).name
-    return fname.replace('model_','').replace('.pth.tar', '')
     
     
 def setup(rank, world_size):    
@@ -220,91 +215,83 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     num_classes=0
     feature_extract=True
     
-    chpt_dir = args.checkpoint_dir
-    if chpt_dir=='notUsed':
-        fpaths = [args.init_checkpoint_path]
+    if args.checkpoint_dir=='na':
+        xmodel = get_model(image_size, num_classes, feature_extract, args)
     else:
-        fpaths = [str(Path(chpt_dir, fname))
-                 for fname in os.listdir(chpt_dir)
-                 if Path(chpt_dir, fname).suffix=='.tar']
+        chpt_dir = args.checkpoint_dir
     
-    for fp in tqdm(fpaths):
-        init_checkpoint_path = fp
-        run_id = get_run_id(fp)
-        xmodel = get_model(image_size, num_classes, feature_extract, 
-                           fp, args)
+    xmodel = xmodel.to(rank)
+    xmodel = DDP(xmodel, device_ids=[rank], output_device=rank, 
+                   find_unused_parameters=False)
     
-        xmodel = xmodel.to(rank)
-        xmodel = DDP(xmodel, device_ids=[rank], output_device=rank, 
-                       find_unused_parameters=False)
+    
+    # Make the dataloaders and samplers
+    sampler_shuffle = False #for the distributed dampler
+    batch_size = args.batch_size# 128
+    pin_memory = False
+    num_workers = args.num_workers #number_of_cpu-1#32
+    
+#     collate_fn = my_collate#None
+    print('n cpu: ', number_of_cpu, ' n workers: ', num_workers)
+    
+    for phase in phases:
+        dataset = datasets[phase]
+        sampler = DistributedSampler(dataset, num_replicas=world_size, 
+                                               rank=rank, shuffle=sampler_shuffle, 
+                                               seed=seed)
+        dataloader = torch.utils.data.DataLoader(
+            dataset, batch_size=batch_size, pin_memory=pin_memory, collate_fn=collate_fn,
+            num_workers=num_workers, shuffle=False, sampler=sampler, drop_last=False)
+        print('len dset, len dloader: ', len(dataset), len(dataloader))
+    #         print(dataset.__getitem__(22).shape)
+        print('dataloaders created') #@@@
+
+        verbose = (verbose and is_main_process())
 
 
-        # Make the dataloaders and samplers
-        sampler_shuffle = False #for the distributed dampler
-        batch_size = args.batch_size# 128
-        pin_memory = False
-        num_workers = args.num_workers #number_of_cpu-1#32
+        data = {
+            'fnames':[],
+            'embeddings': []   
+        }
+        outputs = [None for _ in range(world_size)]
 
-    #     collate_fn = my_collate#None
-        print('n cpu: ', number_of_cpu, ' n workers: ', num_workers)
+        print_period=1#20
+    #     i_break = 5
+        with torch.no_grad():
+            for i_t, xbatch in enumerate(tqdm(dataloader)):
+                inputs, fnames = xbatch
+                if inputs is None:
+                    continue
+    #             print('len(fnames):',len(fnames)) #@@@@@debug
+    #             print('inputs.shape:',inputs.shape)
+                inputs = inputs.to(rank)
+                image_features = xmodel(pixel_values=inputs).logits
+    #             image_features /= image_features.norm(dim=-1, keepdim=True)
+                data['fnames'] += fnames
+                data['embeddings'].append(image_features.detach().cpu().numpy())
 
-        for phase in phases:
-            dataset = datasets[phase]
-            sampler = DistributedSampler(dataset, num_replicas=world_size, 
-                                                   rank=rank, shuffle=sampler_shuffle, 
-                                                   seed=seed)
-            dataloader = torch.utils.data.DataLoader(
-                dataset, batch_size=batch_size, pin_memory=pin_memory, collate_fn=collate_fn,
-                num_workers=num_workers, shuffle=False, sampler=sampler, drop_last=False)
-            print('len dset, len dloader: ', len(dataset), len(dataloader))
-        #         print(dataset.__getitem__(22).shape)
-            print('dataloaders created') #@@@
-
-            verbose = (verbose and is_main_process())
-
-
-            data = {
-                'fnames':[],
-                'embeddings': []   
-            }
-            outputs = [None for _ in range(world_size)]
-
-            print_period=1#20
-        #     i_break = 5
-            with torch.no_grad():
-                for i_t, xbatch in enumerate(tqdm(dataloader)):
-                    inputs, fnames = xbatch
-                    if inputs is None:
-                        continue
-        #             print('len(fnames):',len(fnames)) #@@@@@debug
-        #             print('inputs.shape:',inputs.shape)
-                    inputs = inputs.to(rank)
-                    image_features = xmodel(pixel_values=inputs).logits
-        #             image_features /= image_features.norm(dim=-1, keepdim=True)
-                    data['fnames'] += fnames
-                    data['embeddings'].append(image_features.detach().cpu().numpy())
-
-                    if (i_t%print_period)==0:
-                        memory_allocated = torch.cuda.memory_allocated() / 1024**2
-                        print(f'GPU memory allocated: {memory_allocated:.2f} MB')
-        #             if i_t==i_break:
-        #                 break #@@@
-            print('len(data[fnames]):',len(data['fnames'])) #@@@@@debug
-            dist.all_gather_object(outputs, data)
+                if (i_t%print_period)==0:
+                    memory_allocated = torch.cuda.memory_allocated() / 1024**2
+                    print(f'GPU memory allocated: {memory_allocated:.2f} MB')
+    #             if i_t==i_break:
+    #                 break #@@@
+        print('len(data[fnames]):',len(data['fnames'])) #@@@@@debug
+        dist.all_gather_object(outputs, data)
 
 
-            if is_main_process():
-                print('finished processing')
-                allfnames, allembeddings = [],[]
-                for cdict in outputs:
-                    allfnames += cdict['fnames']
-        #             allfnames += list(chain(*cdict['fnames'])) 
-                    print('Aggregating worker results:',len(cdict['fnames']),'/', len(allfnames))
-                    allembeddings +=cdict['embeddings']
+        if is_main_process():
+            print('finished processing')
+            allfnames, allembeddings = [],[]
+            for cdict in outputs:
+                allfnames += cdict['fnames']
+    #             allfnames += list(chain(*cdict['fnames'])) 
+                print('Aggregating worker results:',len(cdict['fnames']),'/', len(allfnames))
+                allembeddings +=cdict['embeddings']
 
-                allembeddings = np.concatenate(allembeddings)
+            allembeddings = np.concatenate(allembeddings)
 
-                save_results(allfnames, allembeddings, phase, run_id, args)
+            save_results(allfnames, allembeddings, phase, args)
+        
 
     cleanup()
     
@@ -337,7 +324,7 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint_dir',
                            type=str,
                         default='na',
-                           help='the directory of all checkpoints. Set if you want to try all checkpoints. init_checkpoint_path, run_id will be ignored.')
+                           help='the directory of all checkpoints. Set if you want to try all checkpoints. init_checkpoint_path will be ignored.')
     
     parser.add_argument('--dataset_split',
                            type=str,

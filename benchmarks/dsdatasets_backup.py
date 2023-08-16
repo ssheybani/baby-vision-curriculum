@@ -249,10 +249,10 @@ class UCF101(torchvision.datasets.ucf101.UCF101):
         
         self.indices = []
 #         fold=1
-#         for train in [True, False]:
-#             fold=fold
+        for train in [True, False]:
+            fold=fold
 #             for fold in range(1,4):
-        self.indices+=self._select_fold(video_list, annotation_path, fold, train)
+            self.indices+=self._select_fold(video_list, annotation_path, fold, train)
 #         self.indices = self.indices[::]
         video_clips = self.full_video_clips
         self.video_clips = video_clips.subset(self.indices)

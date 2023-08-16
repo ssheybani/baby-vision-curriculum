@@ -78,8 +78,7 @@ echo "run id: $run_id"
 num_workers=6
 
 ds_task='ssv2'
-vid_root=$ssv2_root
-python /N/project/baby_vision_curriculum/github/baby-vision-curriculum/benchmarks/compute_embeddings_videomae.py -ds_task $ds_task -vid_root $vid_root -init_checkpoint_path $init_checkpoint_path -savedir $sssavedir --frame_rate $ssframe_rate --run_id $run_id --batch_size $ssbatch_size --architecture $architecture --seed $seed --num_workers $num_workers --num_frames $num_frames --tubelet_size $tubelet_size
+python /N/project/baby_vision_curriculum/github/baby-vision-curriculum/benchmarks/compute_embeddings_videomae.py -ds_task $ds_task -vid_root $ssv2_root -init_checkpoint_path $init_checkpoint_path -savedir $sssavedir --frame_rate $ssframe_rate --run_id $run_id --batch_size $ssbatch_size --architecture $architecture --seed $seed --num_workers $num_workers --num_frames $num_frames --tubelet_size $tubelet_size
 
 ds_task='toybox'
 python /N/project/baby_vision_curriculum/github/baby-vision-curriculum/benchmarks/compute_embeddings_videomae.py -ds_task $ds_task -vid_root $toybox_root -init_checkpoint_path $init_checkpoint_path -savedir $tbsavedir --frame_rate $tbframe_rate --run_id $run_id --batch_size $tbbatch_size --architecture $architecture --seed $seed --num_workers $num_workers --num_frames $num_frames --tubelet_size $tubelet_size
