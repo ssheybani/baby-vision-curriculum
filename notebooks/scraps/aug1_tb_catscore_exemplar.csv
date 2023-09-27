@@ -1,0 +1,25 @@
+Curriculum,Stage,Condition,Seed,Train Groups,data_id,category,Iteration
+dev,2,default,111,g0g1,dev_111_default,0.1701388888888889,20000
+dev,0,default,113,,dev_113_default,0.17916666666666667,0
+adev,0,default,111,,adev_111_default,0.13194444444444445,0
+dev,1,default,113,g0,dev_113_default,0.18611111111111112,10000
+dev,3,default,111,g0g1g2,dev_111_default,0.17708333333333334,30000
+dev,2,default,112,g0g1,dev_112_default,0.15902777777777777,20000
+dev,3,default,112,g0g1g2,dev_112_default,0.15902777777777777,30000
+dev,0,default,112,,dev_112_default,0.1486111111111111,0
+adev,1,default,113,g2,adev_113_default,0.13958333333333334,10000
+adev,3,default,113,g2g1g0,adev_113_default,0.17430555555555555,30000
+adev,1,default,112,g2,adev_112_default,0.15902777777777777,10000
+adev,0,default,113,,adev_113_default,0.1701388888888889,0
+adev,3,default,112,g2g1g0,adev_112_default,0.17083333333333334,30000
+adev,2,default,112,g2g1,adev_112_default,0.15694444444444444,20000
+dev,3,default,113,g0g1g2,dev_113_default,0.17916666666666667,30000
+adev,1,default,111,g2,adev_111_default,0.1986111111111111,10000
+dev,0,default,111,,dev_111_default,0.1597222222222222,0
+adev,2,default,113,g2g1,adev_113_default,0.16458333333333333,20000
+adev,2,default,111,g2g1,adev_111_default,0.16875,20000
+dev,2,default,113,g0g1,dev_113_default,0.19236111111111112,20000
+dev,1,default,112,g0,dev_112_default,0.17152777777777778,10000
+adev,3,default,111,g2g1g0,adev_111_default,0.15486111111111112,30000
+adev,0,default,112,,adev_112_default,0.16944444444444445,0
+dev,1,default,111,g0,dev_111_default,0.16458333333333333,10000
