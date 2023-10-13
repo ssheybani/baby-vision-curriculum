@@ -20,7 +20,7 @@ baby-vision-curriculum
 │   ├── predictive
 │   |   └── pretrain_vjepa_v1.1.py
 │   └── contrastive
-└── └── pretrain_simclr_v1.py
+│       └── pretrain_simclr_v1.py
 │
 └── benchmarks: python code used for benchmarking any checkpoint on the tasks
 │   ├── compute_embeddings_videomae.py
