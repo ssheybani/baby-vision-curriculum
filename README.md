@@ -1,6 +1,6 @@
-# Curriculum Learning With Infant Egocentric Videos
-### Saber Sheybani, Himanshu Hansaria, Justin Newell Wood, Linda B. Smith, Zoran Tiganj
-### Neurips 2023 Spotlight
+# Curriculum Learning With Infant Egocentric Videos (Neurips 2023 Spotlight)
+Saber Sheybani, Himanshu Hansaria, Justin Newell Wood, Linda B. Smith, Zoran Tiganj
+
 #### Links: (Preprint), (Video)
 
 images (from assets)
