@@ -34,9 +34,10 @@ baby-vision-curriculum
 
 
 ## Dependencies:
-pytorch, torchvision
-huggingface transformers (for VideoMAE)
-tqdm
++ pytorch
++ torchvision
++ huggingface transformers (for VideoMAE)
++ tqdm
 
 VideoMAE models need to be pretrained on multiple GPUs as they take up substantial GPU memory. We use PyTorch DistributedDataParallel for that.
 
