@@ -26,7 +26,9 @@ baby-vision-curriculum
 │   ├── compute_embeddings_videomae.py
 │   ├── compute_embeddings_jepa.py
 │   ├── compute_embeddings_simclr.py
+│
 └── slurmscripts: linux bash code used for submitting jobs that train and evaluate models.
+│
 └── notebooks: Jupyter notebook files used for creating the figures in the manuscript.
 ```
 
