@@ -247,7 +247,10 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
 
     #     collate_fn = my_collate#None
         print('n cpu: ', number_of_cpu, ' n workers: ', num_workers)
-
+        
+        
+#         break #@@@
+        
         for phase in phases:
             dataset = datasets[phase]
             sampler = DistributedSampler(dataset, num_replicas=world_size, 
@@ -336,7 +339,7 @@ if __name__ == '__main__':
     
     parser.add_argument('--checkpoint_dir',
                            type=str,
-                        default='na',
+                        default='notUsed',
                            help='the directory of all checkpoints. Set if you want to try all checkpoints. init_checkpoint_path, run_id will be ignored.')
     
     parser.add_argument('--dataset_split',
