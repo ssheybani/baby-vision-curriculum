@@ -1,6 +1,0 @@
-computing the embeddings for both train and test sets.
-At this point, only for videomae models.
-Any curriculum and condition
-
-focus on the runs from aug11.
-maybe later redo for the runs from the control analyses.

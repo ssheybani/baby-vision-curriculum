@@ -1,5 +1,0 @@
-###### move to script dir ######
-###### Directory Changed! ######
-###### Running benchmarking.py ######
-len(dirs):  1000
-###### Run Complete! ######
