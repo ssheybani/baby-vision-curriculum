@@ -3,12 +3,11 @@ Saber Sheybani, Himanshu Hansaria, Justin Newell Wood, Linda B. Smith, Zoran Tig
 
 #### Links: (Preprint), (Video)
 
-images (from assets)
-<div style="text-align: center;"><img src="assets/fig_overview.png" height="250px" ></div>
+<div style="text-align: center;"><img src="fig_overview.png"></div>
 
 ## Abstract:
 
-Infants possess a remarkable ability to rapidly learn and process visual inputs. As an infant's mobility increases, so does the variety and dynamics of their visual inputs. Is this change in the properties of the visual inputs beneficial or even critical for the proper development of the visual system? To address this question, we used video recordings from infants wearing head-mounted cameras to pre-train state-of-the-art self-supervised video autoencoders. Critically, we separated the infant data by age group and evaluated the importance of training with a curriculum aligned with developmental order. We found that data from the youngest age group were necessary to kick-start learning. These results highlight the importance of slow visual inputs for the development of visual intelligence and provide a foundation for reverse engineering the learning mechanisms in newborn brains using image computable models from artificial intelligence.
+Infants possess a remarkable ability to rapidly learn and process visual inputs. As an infant's mobility increases, so does the variety and dynamics of their visual inputs. Is this change in the properties of the visual inputs beneficial or even critical for the proper development of the visual system? To address this question, we used video recordings from infants wearing head-mounted cameras to train a variety of self-supervised learning models. Critically, we separated the infant data by age group and evaluated the importance of training with a curriculum aligned with developmental order. We found that initiating learning with the data from the youngest age group provided the strongest learning signal and led to the best learning outcomes in terms of downstream task performance. We then showed that the benefits of the data from the youngest age group are due to the slowness and simplicity of the visual experience. The results provide strong empirical evidence for the importance of the properties of the early infant experience and developmental progression in training. More broadly, our approach and findings take a noteworthy step towards reverse engineering the learning mechanisms in newborn brains using image-computable models from artificial intelligence.
 
 
 ## Code base Organization
