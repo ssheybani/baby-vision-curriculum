@@ -4,7 +4,7 @@ Saber Sheybani, Himanshu Hansaria, Justin Newell Wood, Linda B. Smith, Zoran Tig
 #### Links: (Preprint), (Video)
 
 images (from assets)
-<div style="text-align: center;"><img src="assets/fig1.png" height="250px" ></div>
+<div style="text-align: center;"><img src="assets/fig_overview.png" height="250px" ></div>
 
 ## Abstract:
 
@@ -16,11 +16,11 @@ Infants possess a remarkable ability to rapidly learn and process visual inputs.
 baby-vision-curriculum
 └── pretraining: python code used for pretraining the models with various objectives and architectures
 │   ├── generative
-│   |   └── pretrain_videomae_v3.1.py
+│   |   └── pretrain_videomae.py
 │   ├── predictive
-│   |   └── pretrain_vjepa_v1.1.py
+│   |   └── pretrain_vjepa.py
 │   └── contrastive
-│       └── pretrain_simclr_v1.py
+│       └── pretrain_simclr.py
 │
 └── benchmarks: python code used for benchmarking any checkpoint on the tasks
 │   ├── compute_embeddings_videomae.py
