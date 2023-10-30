@@ -1,3 +1,0 @@
-to test the condition of shuffled frame order
-
-pretrain_videomae_v2.2shuffle.py

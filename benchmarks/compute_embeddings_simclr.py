@@ -14,12 +14,9 @@ import torch, torchvision
 from torchvision import transforms as tr
 from tqdm import tqdm
 from pathlib import Path
-# import math
 import argparse
 import pandas as pd
 import warnings
-
-# import transformers
 
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
@@ -27,14 +24,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.multiprocessing as mp
 from ddputils import is_main_process, save_on_master, setup_for_distributed
 
-# import cv2
-# script_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scripts')
-# print(script_dir)
-# sys.path.insert(0, script_dir)
 from dsdatasets import SSv2Dataset, ToyboxDataset, make_ucf101dataset, make_cifar10dataset, ucf_collate, _get_transform, transform_vid
 
-# import vision_transformer as vit
-# from helper import load_checkpoint
 from tensors import trunc_normal_
 
 # ------------
@@ -147,14 +138,6 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
         torch.cuda.set_device(rank)
     torch.manual_seed(seed)
         
-    # data = {
-    #     'results': {'train_loss':[]}   
-    # }
-    # we have to create enough room to store the collected objects
-    # outputs = [None for _ in range(world_size)]
-    
-     # directory names etc
-    #---------------
     
     # setup the process groups
     setup(rank, world_size) 
@@ -196,10 +179,6 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     
     # Instantiate the model, optimizer
     #Load the model, adapt it to the downstream task
-#     image_size = 224
-#     feature_extract = (args.finetune=='n')
-#     num_classes=0
-#     feature_extract=True
     xmodel = get_model(args)
     
     xmodel = xmodel.to(rank)
@@ -209,7 +188,7 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     
     
     # Make the dataloaders and samplers
-    sampler_shuffle = False #for the distributed dampler
+    sampler_shuffle = False 
     batch_size = args.batch_size# 128
     pin_memory = False
     num_workers = args.num_workers #number_of_cpu-1#32

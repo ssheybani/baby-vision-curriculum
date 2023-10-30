@@ -17,7 +17,7 @@ baby-vision-curriculum
 │   ├── generative
 │   |   └── pretrain_videomae.py
 │   ├── predictive
-│   |   └── pretrain_vjepa.py
+│   |   └── pretrain_jepa.py
 │   └── contrastive
 │       └── pretrain_simclr.py
 │
@@ -28,7 +28,8 @@ baby-vision-curriculum
 │
 └── slurmscripts: linux bash code used for submitting jobs that train and evaluate models.
 │
-└── notebooks: Jupyter notebook files used for creating the figures in the manuscript.
+├── notebooks: Jupyter notebook files used for creating the figures in the manuscript.
+    └── EvaluateEmbeddings.ipynb
 ```
 
 

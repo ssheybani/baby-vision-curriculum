@@ -28,14 +28,6 @@ import torch.multiprocessing as mp
 from ddputils import is_main_process, save_on_master, setup_for_distributed
 
 from dsdatasets import SSv2Dataset, ToyboxDataset, make_ucf101dataset, ucf_collate, _get_transform, transform_vid
-# from transformers import VideoMAEConfig, VideoMAEModel
-# from torch.utils.data import Dataset
-# import av
-
-# from time import time
-# from copy import deepcopy
-# import cv2
-# from itertools import chain
 
 # ------------
 # Dataset and Dataloader
@@ -96,16 +88,11 @@ def get_model(image_size, num_labels, feature_extracting, init_checkpoint_path, 
     model_target = transformers.VideoMAEForVideoClassification(config=config_target)
 #     model_target = transformers.VideoMAEModel(config=config_target) #@@@ do not add the classifer head
     model_target = adapt_videomae(model_source, model_target)
-#     if not torch.all(
-#         model_target.embeddings.patch_embeddings.projection.weight==model_source.videomae.embeddings.patch_embeddings.projection.weight):
-#         warnings.warn('Model not successfully initialized')
+
     if not torch.all(
         model_target.videomae.embeddings.patch_embeddings.projection.weight==model_source.videomae.embeddings.patch_embeddings.projection.weight):
         warnings.warn('Model not successfully initialized')
-    
-#     if feature_extracting: #@@@@@ redundant with torch.no_grad
-#         set_parameter_requires_grad(model_target, feature_extracting)
-    
+        
     return model_target
 
 #------------------------------------
@@ -119,8 +106,6 @@ def save_results(fnames, embeddings, phase, run_id, args):
         print('type(fnames[0]):',type(fnames[0]))
     except:
         pass
-#     if type(fnames[0])==list:
-#         print('len(fnames[0]):',len(fnames[0]))
     hdim = embeddings.shape[1]
     xdf = pd.DataFrame(embeddings, columns= ['dim'+str(i)
                                          for i in range(hdim)])
@@ -160,15 +145,6 @@ def DDP_process(rank, world_size, args, verbose=True):#protocol, seed):
     
     torch.cuda.set_device(rank)
     torch.manual_seed(seed)
-        
-    # data = {
-    #     'results': {'train_loss':[]}   
-    # }
-    # we have to create enough room to store the collected objects
-    # outputs = [None for _ in range(world_size)]
-    
-     # directory names etc
-    #---------------
     
     # setup the process groups
     setup(rank, world_size) 
