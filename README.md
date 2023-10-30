@@ -3,7 +3,7 @@ Saber Sheybani, Himanshu Hansaria, Justin Newell Wood, Linda B. Smith, Zoran Tig
 
 #### Links: (Preprint), (Video)
 
-<div style="text-align: center;"><img src="fig_overview.png"></div>
+<div style="text-align: center;"><img src="fig_overview_web.png"></div>
 
 ## Abstract:
 
