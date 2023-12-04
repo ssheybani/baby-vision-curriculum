@@ -1,7 +1,7 @@
 # Curriculum Learning With Infant Egocentric Videos (Neurips 2023 Spotlight)
 Saber Sheybani, Himanshu Hansaria, Justin Newell Wood, Linda B. Smith, Zoran Tiganj
 
-#### Links: (Preprint), (Video)
+#### Links: [Paper](https://openreview.net/forum?id=zkfyOkBVpz)
 
 <div style="text-align: center;"><img src="fig_overview_web.png"></div>
 
@@ -44,10 +44,10 @@ VideoMAE models need to be pretrained on multiple GPUs as they take up substanti
 ### Citation
 
 ```
-  @article{sheybani23curriculum,
-    title={Curriculum Learning with Infant Egocentric Videos},
-    author={Sheybani, Saber and Hansaria, Himanshu and Wood, Justin and Smith, Linda and Tiganj, Zoran},
-    journal={Advances in Neural Information Processing Systems},
-    year={2023}
+  @inproceedings{sheybani2023curriculum,
+  title={Curriculum Learning With Infant Egocentric Videos},
+  author={Sheybani, Saber and Hansaria, Himanshu and Wood, Justin Newell and Smith, Linda B and Tiganj, Zoran},
+  booktitle={Thirty-seventh Conference on Neural Information Processing Systems},
+  year={2023}
   }
 ```
